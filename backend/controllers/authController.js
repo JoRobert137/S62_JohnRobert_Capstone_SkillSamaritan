@@ -1,5 +1,8 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // or 'bcrypt' if you use that
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here'; // keep this in your .env file
 
 exports.signup = async (req, res) => {
   try {
@@ -11,7 +14,14 @@ exports.signup = async (req, res) => {
     const user = new User({ name, email, password: hashedPassword, skills });
     await user.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
+    // Create token
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
+
+    res.status(201).json({ 
+      message: 'User registered successfully', 
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -31,7 +41,14 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    res.json({ message: 'Login successful', user: { id: user._id, name: user.name, email: user.email } });
+    // Create token
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
+
+    res.json({ 
+      message: 'Login successful', 
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
