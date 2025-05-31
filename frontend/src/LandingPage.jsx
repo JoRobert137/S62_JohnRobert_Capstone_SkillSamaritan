@@ -1,3 +1,5 @@
+import React from "react";
+import { Link } from "react-router-dom"; // Ensure you're using react-router
 import "./LandingPage.css";
 
 function LandingPage() {
@@ -10,14 +12,14 @@ function LandingPage() {
         </p>
       </header>
 
-      <div className="card">
+      <main className="card">
         <h2 className="card-title">Get Started</h2>
         <p className="card-text">Sign up or log in to begin your journey.</p>
         <div className="button-group">
-          <button className="btn-primary">Sign Up</button>
-          <button className="btn-outline">Log In</button>
+          <Link to="/signup" className="btn-primary">Sign Up</Link>
+          <Link to="/login" className="btn-outline">Log In</Link>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
