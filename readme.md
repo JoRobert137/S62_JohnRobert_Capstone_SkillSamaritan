@@ -118,4 +118,7 @@ People often possess unique skills but lack a platform to share them locally and
 
 Backend Deployment Link : https://s62-johnrobert-capstone-skillsamaritan-2.onrender.com
 
+Frontend deployment Link : s62-john-robert-capstone-skill-sama.vercel.app
+
+
 
