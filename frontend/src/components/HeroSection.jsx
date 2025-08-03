@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 const HeroSection = () => {
     const Navigate = useNavigate();
@@ -13,12 +14,14 @@ const HeroSection = () => {
           Earn points for every act of kindness in our skill-sharing community.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <button className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg" onClick={()=>Navigate('/login')}>
-            Find Help Now
-          </button>
-          <button className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg">
-            Offer Your Skills
-          </button>
+          <nav>
+            <Link to="/login" className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
+              Find Help Now
+            </Link> <span></span>
+            <Link to="/signup" className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
+              Offer Your Skills
+            </Link>
+          </nav>
         </div>
       </div>
     </section>
