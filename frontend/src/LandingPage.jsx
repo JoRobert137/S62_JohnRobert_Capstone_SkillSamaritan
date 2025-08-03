@@ -1,26 +1,22 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Ensure you're using react-router
-import "./LandingPage.css";
+import { Link } from "react-router-dom";
+import Header from "./components/Header";
+import HeroSection from "./components/HeroSection";
+import StatsSection from "./components/StatsSection";
+import TaskFeed from "./components/TaskFeed";
+import Footer from "./components/Footer";
+import Testimonials from "./components/Testimonials";
 
 function LandingPage() {
   return (
-    <div className="landing-page">
-      <header className="header">
-        <h1 className="title">SkillSamaritan</h1>
-        <p className="subtitle">
-          Where Talent Meets Kindness – a platform to share your skills and help your local community grow.
-        </p>
-      </header>
-
-      <main className="card">
-        <h2 className="card-title">Get Started</h2>
-        <p className="card-text">Sign up or log in to begin your journey.</p>
-        <div className="button-group">
-          <Link to="/signup" className="btn-primary">Sign Up</Link>
-          <Link to="/login" className="btn-outline">Log In</Link>
-        </div>
-      </main>
-    </div>
+    <>
+    <Header />
+      <HeroSection />
+      <StatsSection />
+      <TaskFeed />
+      <Testimonials />
+      <Footer /> 
+    </>
   );
 }
 
