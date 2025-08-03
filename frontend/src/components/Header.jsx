@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Bell, User } from 'lucide-react';
 
 const Header = () => {
@@ -22,9 +23,14 @@ const Header = () => {
         <div className="flex items-center space-x-3">
           <Bell className="w-5 h-5" />
           <User className="w-5 h-5" />
-          <button className="bg-green-500 text-white py-2 px-6 rounded-md transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md hover:shadow-lg">
-            Join Community
-          </button>
+          <nav>
+            <Link
+              to="/signup"
+              className="bg-green-500 text-white py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md hover:shadow-lg"
+            >
+              Join Community
+            </Link>
+          </nav>
 
         </div>
       </div>
