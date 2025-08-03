@@ -1,6 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-// Simple reusable Button component
 const Button = ({ className = '', children, ...props }) => (
   <button
     {...props}
@@ -28,9 +28,11 @@ const Footer = () => {
             </p>
             <div className="bg-green-500 p-4 rounded-lg">
               <h4 className="font-semibold mb-2">Ready to get started?</h4>
-              <Button className="bg-white text-green-700 hover:bg-green-100 hover:text-green-900 transition-all duration-300 ease-in-out transform shadow-md hover:shadow-lg">
+              <a href='/signup'>
+                <Button className="bg-white text-green-700 hover:bg-green-100 hover:text-green-900 transition-all duration-300 ease-in-out transform shadow-md hover:shadow-lg">
                 Join Our Community
               </Button>
+              </a>
 
             </div>
           </div>
