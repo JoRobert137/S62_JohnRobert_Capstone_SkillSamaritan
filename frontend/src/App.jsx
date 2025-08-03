@@ -1,18 +1,19 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import HeroSection from './components/HeroSection';
+import StatsSection from './components/StatsSection';
+import { Routes,Route } from 'react-router-dom';
+import LoginForm from './components/LoginForm'; // Assuming you have a LoginPage component
 import LandingPage from './LandingPage';
-import SignupForm from './components/SignupForm';
-import LoginForm from './components/LoginForm';
-
 function App() {
   return (
-    <Router>
+    <div>
+      
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/signup" element={<SignupForm />} />
         <Route path="/login" element={<LoginForm />} />
       </Routes>
-    </Router>
+    </div>
   );
 }
 
