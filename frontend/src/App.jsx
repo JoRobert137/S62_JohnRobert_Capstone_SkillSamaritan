@@ -1,11 +1,9 @@
 import React from 'react';
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import StatsSection from './components/StatsSection';
 import { Routes,Route } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
-import LandingPage from './LandingPage';
+import LandingPage from './pages/LandingPage';
+
 function App() {
   return (
     <div>

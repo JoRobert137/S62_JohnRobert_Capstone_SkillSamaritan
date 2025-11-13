@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { getAllUsers, createUser, updateUser } = require("../controllers/userController");
+const { getAllUsers, updateUser } = require("../controllers/userController");
+const authenticateToken = require("../middleware/auth");
 
-router.get("/users", getAllUsers);
-router.post("/users", createUser);
-router.put("/users/:id", updateUser);
+// GET ALL USERS
+router.get("/", authenticateToken, getAllUsers);
+
+// UPDATE EXISTING USER
+router.put("/:id", authenticateToken, updateUser);
 
 module.exports = router;
