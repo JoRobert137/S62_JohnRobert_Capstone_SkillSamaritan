@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+
 const HeroSection = () => {
-    const Navigate = useNavigate();
   return (
     <section className="bg-gradient-to-r from-green-500 to-teal-400 text-white py-20 text-center">
       <div className="max-w-4xl mx-auto px-4">
@@ -14,14 +13,18 @@ const HeroSection = () => {
           Earn points for every act of kindness in our skill-sharing community.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <nav>
-            <Link to="/login" className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
-              Find Help Now
-            </Link> <span></span>
-            <Link to="/signup" className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
-              Offer Your Skills
-            </Link>
-          </nav>
+          <Link 
+            to="/login" 
+            className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Find Help Now
+          </Link>
+          <Link 
+            to="/signup" 
+            className="bg-white text-green-600 font-semibold px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Offer Your Skills
+          </Link>
         </div>
       </div>
     </section>

@@ -1,20 +1,34 @@
-// server.js
 const express = require("express");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const path = require("path");
 const userRoutes = require("./routes/userRoutes");
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require("./routes/authRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 
-require("dotenv").config();
+if (process.env.NODE_ENV !== "PRODUCTION") {
+  require("dotenv").config({
+    path: path.resolve(__dirname, "./config/.env"),
+  });
+}
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+
+// CONNECT DB
 connectDB();
 
+app.use(express.json());
+app.use(cors());
+
+// ROUTES
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/tasks", taskRoutes);
 
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.send("SkillSamaritan Backend is running...");
+});
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
