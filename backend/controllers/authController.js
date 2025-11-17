@@ -1,8 +1,9 @@
-const bcrypt = require('bcryptjs'); // or 'bcrypt' if you use that
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const path = require('path');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here'; // keep this in your .env file
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.signup = async (req, res) => {
   try {
@@ -11,10 +12,10 @@ exports.signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const user = new User({ name, email, password: hashedPassword });
     const user = new User({ name, email, password: hashedPassword, skills });
     await user.save();
 
-    // Create token
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
 
     res.status(201).json({ 
@@ -23,13 +24,23 @@ exports.signup = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("Signup Error:", error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
+//-----LOGIN-----
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User does not exist. Please Sign-In' });
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -50,6 +61,8 @@ exports.login = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ message: 'Server error', error: error.message });
     res.status(500).json({ message: 'Server error' });
   }
 };
