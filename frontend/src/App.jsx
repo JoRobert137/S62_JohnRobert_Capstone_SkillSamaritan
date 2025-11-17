@@ -17,7 +17,7 @@ function App() {
         <Route path="/signup" element={<SignupForm />} />
         <Route path="/create-task" element={<TaskForm />} />
         <Route path="/tasks" element={<TaskFeedPage />} />
-        {/* <Route path="/tasks/:id" element={<TaskDetail />} /> */}
+        <Route path="/tasks/:id" element={<TaskDetail />} />
       </Routes>
     </div>
   );
