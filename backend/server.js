@@ -1,3 +1,5 @@
+require("dotenv").config({ path: "./config/.env" });
+
 const express = require("express");
 const connectDB = require("./config/db");
 const cors = require("cors");
@@ -5,12 +7,6 @@ const path = require("path");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
-
-if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({
-    path: path.resolve(__dirname, "./config/.env"),
-  });
-}
 
 const app = express();
 

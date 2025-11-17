@@ -68,6 +68,10 @@ exports.acceptTask = async (req, res) => {
     const task = await Task.findById(id);
     if (!task) return res.status(404).json({ message: "Task not found." });
 
+   if (task.createdBy.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: "You cannot accept your own task." });
+    }
+
     if (task.status !== "open") {
       return res.status(400).json({ message: "Task already accepted or completed." });
     }
@@ -86,6 +90,7 @@ exports.acceptTask = async (req, res) => {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
+
 
 // COMPLETE TASK
 exports.completeTask = async (req, res) => {
