@@ -3,12 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const path = require('path');
 
-if(process.env.NODE_ENV !== "PRODUCTION") {
-    require("dotenv").config({
-        path: path.resolve(__dirname, "../config/.env"),
-    });
-};
-
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // -----SIGNUP-----
