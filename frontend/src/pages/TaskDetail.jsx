@@ -17,7 +17,7 @@ const TaskDetail = () => {
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/tasks/${id}`);
+        const res = await axios.get(`https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks/${id}`);
         setTask(res.data);
       } catch (err) {
         setMessage("Failed to load task");
@@ -50,7 +50,7 @@ const TaskDetail = () => {
   const handleAccept = async () => {
     try {
       await axios.put(
-        `http://localhost:8080/api/tasks/accept/${id}`,
+        `https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks/accept/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -64,7 +64,7 @@ const TaskDetail = () => {
   const handleComplete = async () => {
     try {
       await axios.put(
-        `http://localhost:8080/api/tasks/complete/${id}`,
+        `https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks/complete/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

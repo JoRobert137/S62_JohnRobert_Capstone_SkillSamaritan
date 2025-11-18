@@ -54,7 +54,7 @@ const TaskFeedPage = () => {
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/tasks");
+      const res = await axios.get("https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks");
       setTasks(res.data);
     } catch (error) {
       console.log("Error fetching tasks:", error);
@@ -77,7 +77,7 @@ const TaskFeedPage = () => {
 
     try {
       await axios.put(
-        `http://localhost:8080/api/tasks/accept/${taskId}`,
+        `https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks/accept/${taskId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
