@@ -65,7 +65,6 @@ exports.canUserPerformAction = (user, task, action) => {
 
   const userId = user._id.toString();
   const creatorId = task.createdBy.toString();
-  const helperId = task.acceptedBy ? task.acceptedBy.toString() : null;
 
   // Action-specific authorization checks
   switch (action) {

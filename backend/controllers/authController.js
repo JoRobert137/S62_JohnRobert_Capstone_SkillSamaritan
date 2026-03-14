@@ -67,8 +67,7 @@ exports.signup = async (req, res) => {
 
     res.status(201).json(buildAuthResponse("User registered successfully", user));
   } catch (error) {
-    console.error("Signup Error:", error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -93,7 +92,6 @@ exports.login = async (req, res) => {
 
     res.json(buildAuthResponse("Login successful", user));
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };

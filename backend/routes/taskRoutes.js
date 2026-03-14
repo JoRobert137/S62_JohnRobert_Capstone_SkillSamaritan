@@ -1,34 +1,28 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  createTask,
-  getAllTasks,
-  getTaskById,
-  acceptTask,
-  completeTask,
-} = require("../controllers/taskController");
+const taskController = require("../controllers/taskController");
 
 const authenticateToken = require("../middleware/auth");
 
 // CREATE TASK (protected)
 // POST /api/tasks
-router.post("/", authenticateToken, createTask);
+router.post("/", authenticateToken, taskController.createTask);
 
 // GET ALL TASKS (public feed)
 // GET /api/tasks
-router.get("/", getAllTasks);
+router.get("/", taskController.getAllTasks);
 
 // GET SINGLE TASK (public)
 // GET /api/tasks/:id
-router.get("/:id", getTaskById);
+router.get("/:id", taskController.getTaskById);
 
 // ACCEPT TASK (protected)
 // POST /api/tasks/:id/accept
-router.post("/:id/accept", authenticateToken, acceptTask);
+router.post("/:id/accept", authenticateToken, taskController.acceptTask);
 
 // COMPLETE TASK (protected)
 // POST /api/tasks/:id/complete
-router.post("/:id/complete", authenticateToken, completeTask);
+router.post("/:id/complete", authenticateToken, taskController.completeTask);
 
 module.exports = router;

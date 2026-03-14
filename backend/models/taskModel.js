@@ -40,6 +40,10 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+taskSchema.index({ status: 1, createdAt: -1 });
+taskSchema.index({ createdBy: 1, createdAt: -1 });
+taskSchema.index({ acceptedBy: 1, status: 1 });
+
 // Prevent creator from accepting their own task
 taskSchema.pre("save", function (next) {
   if (this.acceptedBy && this.createdBy.equals(this.acceptedBy)) {

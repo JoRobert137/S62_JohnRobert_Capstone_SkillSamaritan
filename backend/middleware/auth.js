@@ -8,7 +8,7 @@ const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers.authorization || req.headers.Authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Access denied, token missing!" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const token = authHeader.split(" ")[1];
@@ -16,15 +16,14 @@ const authenticateToken = async (req, res, next) => {
 
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return res.status(401).json({ message: "User no longer exists" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     req.user = user;
     next();
 
   } catch (err) {
-    console.error("Auth Error:", err);
-    return res.status(403).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
 

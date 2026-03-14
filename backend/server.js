@@ -1,16 +1,13 @@
 require("dotenv").config({ path: "./config/.env" });
 const express = require("express");
-const connectDB = require("./config/db");
 const cors = require("cors");
-const path = require("path");
+const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
-
-// CONNECT DB
-connectDB();
 
 app.use(express.json());
 app.use(cors());
@@ -20,10 +17,17 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 
-// TEST ROUTE
-app.get("/", (req, res) => {
-  res.send("SkillSamaritan Backend is running...");
+app.use((req, res) => {
+  return res.status(404).json({ message: "Not found" });
 });
 
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT);
+};
+
+startServer();

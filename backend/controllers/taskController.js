@@ -3,8 +3,6 @@ const User = require("../models/userModel");
 const {
   validateCreation,
   validateAcceptance,
-  validateCompletion,
-  getValidTransitions,
 } = require("../utils/taskValidation");
 const {
   canUserPerformAction,
@@ -62,8 +60,7 @@ exports.createTask = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Create Task Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -75,10 +72,9 @@ exports.getAllTasks = async (req, res) => {
       .populate("acceptedBy", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(tasks);
+    return res.status(200).json(tasks);
   } catch (error) {
-    console.error("Get Tasks Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -91,10 +87,9 @@ exports.getTaskById = async (req, res) => {
 
     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    res.status(200).json(task);
+    return res.status(200).json(task);
   } catch (error) {
-    console.error("Get Task Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -144,7 +139,7 @@ exports.acceptTask = async (req, res) => {
       .populate("createdBy", "name email")
       .populate("acceptedBy", "name email");
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Task accepted successfully!",
       task: updatedTask,
       userStats: {
@@ -152,8 +147,7 @@ exports.acceptTask = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Accept Task Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -215,10 +209,6 @@ exports.completeTask = async (req, res) => {
     const helper = await User.findById(task.acceptedBy);
 
     if (!helper) {
-      console.error(
-        `Helper user ${task.acceptedBy} not found for task completion. Task: ${id}`
-      );
-
       return res.status(400).json({
         message:
           "Cannot complete task: The helper who accepted this task is no longer available.",
@@ -287,7 +277,7 @@ exports.completeTask = async (req, res) => {
         .populate("createdBy", "name email")
         .populate("acceptedBy", "name email");
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Task completed successfully! Points transferred.",
         task: transactionTask,
         pointsTransferred: {
@@ -303,7 +293,6 @@ exports.completeTask = async (req, res) => {
       });
     } catch (transactionError) {
       await session.abortTransaction();
-      console.error("Transaction error during task completion:", transactionError);
 
       return res.status(500).json({
         message: "Transaction failed. No points were transferred.",
@@ -314,8 +303,6 @@ exports.completeTask = async (req, res) => {
       session.endSession();
     }
   } catch (error) {
-    console.error("Complete Task Error:", error);
-
     if (error.name === "CastError") {
       return res.status(400).json({
         message: "Invalid task ID format.",
@@ -331,11 +318,6 @@ exports.completeTask = async (req, res) => {
       });
     }
 
-    res.status(500).json({
-      message:
-        "An unexpected error occurred while completing the task.",
-      error: "INTERNAL_SERVER_ERROR",
-      suggestion: "Please try again or contact support if this persists.",
-    });
+    return res.status(500).json({ message: "Server error" });
   }
 };
