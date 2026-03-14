@@ -1,39 +1,85 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  CheckCircle,
+  CircleAlert,
+  Clock,
+  Coins,
+  Tags,
+  User,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { taskAPI } from "../services/api";
-import { User, Clock, Coins, Tags, CheckCircle, CircleAlert, ArrowLeft } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 const TaskDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    fetchTask();
-  }, [id]);
-
-  const fetchTask = async () => {
+  const fetchTask = useCallback(async () => {
     try {
       const res = await taskAPI.getTaskById(id);
       setTask(res.data);
+      setMessage("");
     } catch (err) {
-      setMessage("Failed to load task");
+      setMessage(err.response?.data?.message || "Failed to load task");
+      setTask(null);
     } finally {
       setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchTask();
+  }, [fetchTask]);
+
+  const handleAccept = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await taskAPI.acceptTask(id);
+      setMessage("Task accepted successfully!");
+      await fetchTask();
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to accept task");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await taskAPI.completeTask(id);
+      setMessage("Task marked as completed!");
+      await fetchTask();
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to complete task");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   if (loading) {
-    ret>
+    return (
+      <>
         <Header />
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
@@ -50,14 +96,16 @@ const TaskDetail = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="text-center max-w-md">
             <CircleAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <p className="text-red-600 text-xl font-semibold mb-4">Task not found</p>
+            <p className="text-red-600 text-xl font-semibold mb-3">Task not found</p>
+            {message && <p className="text-gray-600 mb-6">{message}</p>}
             <button
-              onClick={() => navigate('/tasks')}
-              className="text-green-600 hover:text-green-700 font-medium"
+              onClick={() => navigate("/tasks")}
+              className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
             >
+              <ArrowLeft className="w-4 h-4" />
               Back to Tasks
             </button>
           </div>
@@ -67,37 +115,55 @@ const TaskDetail = () => {
     );
   }
 
-  // Check if current user is the task creator
-  const isCreator = user && (user._id === task.createdBy?._id || user.id === task.createdBy?._id);
-  
-  // Check if current user accepted this task
-  const isAcceptedByUser = user && task.acceptedBy && 
-    (user._id === task.acceptedBy._id || user.id === task.acceptedBy._id);
+  const creatorId = task.createdBy?._id || task.createdBy;
+  const acceptedById = task.acceptedBy?._id || task.acceptedBy;
+  const currentUserId = user?._id || user?.id;
 
-  const handleAccept = async () => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
+  const isCreator = Boolean(currentUserId && creatorId && currentUserId === creatorId);
+  const isAcceptedByUser = Boolean(currentUserId && acceptedById && currentUserId === acceptedById);
 
-    setActionLoading(true);
-    try {
-      await taskAPI.acceptTask(id);
-      setMessage("Task accepted successfully!");
-      await fetchTask(); // Refresh task data
-    } ca    <div className="p-8">
-              {/* Status Badge */}
+  return (
+    <>
+      <Header />
+      <section className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 py-10 px-4">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={() => navigate("/tasks")}
+            className="mb-6 inline-flex items-center gap-2 text-green-700 hover:text-green-800 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Task Feed
+          </button>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="p-8">
+              {message && (
+                <div
+                  className={`mb-6 p-4 rounded-lg border ${
+                    message.toLowerCase().includes("success") || message.toLowerCase().includes("completed")
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-red-50 text-red-700 border-red-200"
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
+
               <div className="mb-6">
                 <span
                   className={`px-4 py-2 rounded-lg text-sm font-semibold ${
                     task.status === "open"
                       ? "bg-green-100 text-green-700 border border-green-200"
                       : task.status === "accepted"
-                      ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                      : "bg-blue-100 text-blue-700 border border-blue-200"
+                        ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                        : "bg-blue-100 text-blue-700 border border-blue-200"
                   }`}
                 >
-                  {task.status === "open" ? "OPEN" : task.status === "accepted" ? "IN PROGRESS" : "COMPLETED"}
+                  {task.status === "open"
+                    ? "OPEN"
+                    : task.status === "accepted"
+                      ? "IN PROGRESS"
+                      : "COMPLETED"}
                 </span>
               </div>
 
@@ -160,13 +226,13 @@ const TaskDetail = () => {
                   Skills Required
                 </h3>
                 <div className="flex gap-2 flex-wrap">
-                  {task.skillsRequired.length > 0 ? (
-                    task.skillsRequired.map((s, index) => (
+                  {Array.isArray(task.skillsRequired) && task.skillsRequired.length > 0 ? (
+                    task.skillsRequired.map((skill, index) => (
                       <span
-                        key={index}
+                        key={`${skill}-${index}`}
                         className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium border border-green-200"
                       >
-                        {s}
+                        {skill}
                       </span>
                     ))
                   ) : (
@@ -175,11 +241,10 @@ const TaskDetail = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="border-t border-gray-200 pt-6">
                 {!isAuthenticated ? (
                   <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => navigate("/login")}
                     className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
                     Login to Accept This Task
@@ -206,7 +271,7 @@ const TaskDetail = () => {
                         Accepting Task...
                       </div>
                     ) : (
-                      'Accept This Task'
+                      "Accept This Task"
                     )}
                   </button>
                 ) : isAcceptedByUser && task.status === "accepted" ? (
@@ -249,61 +314,6 @@ const TaskDetail = () => {
       </section>
       <Footer />
     </>
-  );
-};
-
-export default TaskDetail;          </div>
-        </div>
-
-        <div className="flex items-center gap-2 mb-6">
-          <Coins className="w-5 h-5 text-yellow-500" />
-          <span className="text-lg font-semibold text-green-600">
-            {task.points} Points
-          </span>
-        </div>
-
-        <div className="mb-6">
-          <span
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              task.status === "open"
-                ? "bg-green-100 text-green-700"
-                : task.status === "accepted"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            Status: {task.status.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="mt-6 space-y-3">
-
-          {!isCreator && task.status === "open" && (
-            <button
-              onClick={handleAccept}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
-            >
-              Accept Task
-            </button>
-          )}
-
-          {isAcceptedByUser && task.status === "accepted" && (
-            <button
-              onClick={handleComplete}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition"
-            >
-              Mark as Completed
-            </button>
-          )}
-
-          {isCreator && (
-            <p className="text-center text-gray-500 text-sm">
-              You created this task.
-            </p>
-          )}
-        </div>
-      </div>
-    </section>
   );
 };
 

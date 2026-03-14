@@ -63,7 +63,7 @@ const Dashboard = () => {
     fetchUserTasks();
   }, [token, user]);
 
-  const StatCard = ({ icon: Icon, label, value, color }) => (
+  const StatCard = ({ icon, label, value, color }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
@@ -71,7 +71,7 @@ const Dashboard = () => {
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`p-4 rounded-full ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
+          {React.createElement(icon, { className: "w-6 h-6 text-white" })}
         </div>
       </div>
     </div>
