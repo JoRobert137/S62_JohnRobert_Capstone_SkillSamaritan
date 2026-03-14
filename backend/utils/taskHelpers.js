@@ -141,7 +141,7 @@ exports.canUserPerformAction = (user, task, action) => {
 /**
  * Check if user has sufficient points balance
  *
- * @param {Object} user - User document (contains pointsBalance)
+ * @param {Object} user - User document (contains points)
  * @param {number} pointsNeeded - Points required
  * @returns {Object} { hasSufficient: boolean, deficit?: number, message?: string }
  */
@@ -150,28 +150,28 @@ exports.hasSufficientPoints = (user, pointsNeeded) => {
     return { hasSufficient: false, message: "User not found" };
   }
 
-  if (typeof user.pointsBalance !== "number") {
+  if (typeof user.points !== "number") {
     return {
       hasSufficient: false,
       message: "Invalid user points balance",
     };
   }
 
-  if (user.pointsBalance >= pointsNeeded) {
+  if (user.points >= pointsNeeded) {
     return {
       hasSufficient: true,
-      available: user.pointsBalance,
+      available: user.points,
       required: pointsNeeded,
     };
   }
 
-  const deficit = pointsNeeded - user.pointsBalance;
+  const deficit = pointsNeeded - user.points;
   return {
     hasSufficient: false,
     deficit,
-    available: user.pointsBalance,
+    available: user.points,
     required: pointsNeeded,
-    message: `Insufficient points. You have ${user.pointsBalance} points but need ${pointsNeeded} (deficit: ${deficit})`,
+    message: `Insufficient points. You have ${user.points} points but need ${pointsNeeded} (deficit: ${deficit})`,
   };
 };
 
@@ -228,7 +228,7 @@ exports.simulatePointsAfterCompletion = (user, task, userRole) => {
   if (!user || !task) return null;
 
   const pointsValue = task.points;
-  const currentBalance = user.pointsBalance;
+  const currentBalance = user.points;
   let change = 0;
   let changeType = "none";
 

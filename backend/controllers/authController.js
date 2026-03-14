@@ -11,10 +11,37 @@ if(process.env.NODE_ENV !== "PRODUCTION") {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const normalizeSkills = (skills) => {
+  if (Array.isArray(skills)) return skills;
+  if (typeof skills === "string") {
+    return skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const buildAuthResponse = (message, user) => {
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+
+  return {
+    message,
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      points: user.points,
+      skills: user.skills,
+    },
+  };
+};
+
 // -----SIGNUP-----
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, skills } = req.body;
 
     if(!name || !email || !password){
       return res.status(400).json({ message: "All fields are required." });
@@ -28,17 +55,17 @@ exports.signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = new User({ name, email, password: hashedPassword });
+    const normalizedSkills = normalizeSkills(skills);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      skills: normalizedSkills,
+    });
     await user.save();
 
-    // Create token
-    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
-
-    res.status(201).json({ 
-      message: 'User registered successfully', 
-      token,
-      user: { id: user._id, name: user.name, email: user.email }
-    });
+    res.status(201).json(buildAuthResponse("User registered successfully", user));
   } catch (error) {
     console.error("Signup Error:", error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -64,14 +91,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Create token
-    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
-
-    res.json({ 
-      message: 'Login successful', 
-      token,
-      user: { id: user._id, name: user.name, email: user.email }
-    });
+    res.json(buildAuthResponse("Login successful", user));
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({ message: 'Server error', error: error.message });

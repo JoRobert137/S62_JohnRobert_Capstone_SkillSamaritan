@@ -22,10 +22,10 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    pointsBalance: {
+    points: {
       type: Number,
-      default: 100,
-      min: [0, "Points balance cannot be negative"],
+      default: 0,
+      min: [0, "Points cannot be negative"],
     },
     tasksPosted: {
       type: Number,

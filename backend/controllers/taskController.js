@@ -57,7 +57,7 @@ exports.createTask = async (req, res) => {
       task,
       userStats: {
         tasksPosted: user.tasksPosted,
-        pointsBalance: user.pointsBalance,
+        points: user.points,
         isCreator: isTaskCreator(user, task),
       },
     });
@@ -269,8 +269,8 @@ exports.completeTask = async (req, res) => {
       }
 
       const pointsToTransfer = transactionTask.points;
-      transactionCreator.pointsBalance -= pointsToTransfer;
-      transactionHelper.pointsBalance += pointsToTransfer;
+      transactionCreator.points -= pointsToTransfer;
+      transactionHelper.points += pointsToTransfer;
       transactionHelper.tasksCompleted += 1;
 
       transactionTask.status = "completed";
@@ -296,8 +296,8 @@ exports.completeTask = async (req, res) => {
           amount: pointsToTransfer,
         },
         updatedStats: {
-          creatorBalance: transactionCreator.pointsBalance,
-          helperBalance: transactionHelper.pointsBalance,
+          creatorPoints: transactionCreator.points,
+          helperPoints: transactionHelper.points,
           helperTasksCompleted: transactionHelper.tasksCompleted,
         },
       });

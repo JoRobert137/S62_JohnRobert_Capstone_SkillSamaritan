@@ -116,13 +116,13 @@ exports.validateCompletion = (task, creator) => {
     };
   }
 
-  if (creator.pointsBalance < task.points) {
+  if (creator.points < task.points) {
     return {
       isValid: false,
       error: {
         statusCode: 400,
-        message: `Insufficient points balance. You have ${creator.pointsBalance} points but need ${task.points} to complete this task.`,
-        available: creator.pointsBalance,
+        message: `Insufficient points balance. You have ${creator.points} points but need ${task.points} to complete this task.`,
+        available: creator.points,
         required: task.points,
       },
     };
@@ -166,13 +166,13 @@ exports.validateCreation = (data, user) => {
     };
   }
 
-  if (user.pointsBalance < taskPoints) {
+  if (user.points < taskPoints) {
     return {
       isValid: false,
       error: {
         statusCode: 400,
-        message: `Insufficient points. You have ${user.pointsBalance} points but need ${taskPoints} points to create this task.`,
-        available: user.pointsBalance,
+        message: `Insufficient points. You have ${user.points} points but need ${taskPoints} points to create this task.`,
+        available: user.points,
         required: taskPoints,
       },
     };

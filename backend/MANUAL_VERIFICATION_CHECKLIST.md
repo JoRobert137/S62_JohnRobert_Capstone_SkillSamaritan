@@ -40,7 +40,7 @@ Authorization: Bearer TOKEN_A
 
 Expected Response:
 {
-  "pointsBalance": 100,
+  "points": 100,
   "tasksPosted": 0,
   "tasksCompleted": 0
 }
@@ -70,13 +70,13 @@ Content-Type: application/json
 - Status: `201 Created`
 - Task object with `status: "open"`
 - `createdBy` references Alice
-- User stats show `tasksPosted: 1`, `pointsBalance: 100` (no deduction yet)
+- User stats show `tasksPosted: 1`, `points: 100` (no deduction yet)
 
 **Verification Checklist:**
 - [ ] Task created successfully
 - [ ] Task status is "open"
 - [ ] Alice's `tasksPosted` incremented to 1
-- [ ] Alice's `pointsBalance` still 100 (no deduction at creation)
+- [ ] Alice's `points` still 100 (no deduction at creation)
 - [ ] Task shows `createdBy` with Alice's ID
 - [ ] Task has no `acceptedBy` value
 - [ ] Task has no `completedAt` value
@@ -125,8 +125,8 @@ Authorization: Bearer TOKEN_A
 **Verification Checklist:**
 - [ ] Task status is "completed"
 - [ ] `completedAt` timestamp is set
-- [ ] Alice's `pointsBalance` reduced to 75 (100 - 25)
-- [ ] Bob's `pointsBalance` increased to 125 (100 + 25)
+- [ ] Alice's `points` reduced to 75 (100 - 25)
+- [ ] Bob's `points` increased to 125 (100 + 25)
 - [ ] Bob's `tasksCompleted` incremented to 1
 - [ ] Response includes point transfer details
 
@@ -345,7 +345,7 @@ Authorization: Bearer TOKEN_LOW_BALANCE
 ### Point Conservation Check
 After all tests, verify total points in system:
 ```
-Sum of all user pointsBalances = Initial total (e.g., 200 if 2 users × 100)
+Sum of all user points = Initial total (e.g., 200 if 2 users × 100)
 ```
 
 ### Task State Integrity
@@ -369,7 +369,7 @@ Authorization: Bearer TOKEN
 Verify:
 - [ ] `tasksPosted` matches created tasks count
 - [ ] `tasksCompleted` matches completed tasks as helper
-- [ ] `pointsBalance` >= 0 (never negative)
+- [ ] `points` >= 0 (never negative)
 
 ---
 
