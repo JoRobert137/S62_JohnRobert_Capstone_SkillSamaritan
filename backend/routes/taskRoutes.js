@@ -12,18 +12,23 @@ const {
 const authenticateToken = require("../middleware/auth");
 
 // CREATE TASK (protected)
+// POST /api/tasks
 router.post("/", authenticateToken, createTask);
 
 // GET ALL TASKS (public feed)
+// GET /api/tasks
 router.get("/", getAllTasks);
 
-// GET SINGLE TASK
+// GET SINGLE TASK (public)
+// GET /api/tasks/:id
 router.get("/:id", getTaskById);
 
 // ACCEPT TASK (protected)
-router.put("/accept/:id", authenticateToken, acceptTask);
+// POST /api/tasks/:id/accept
+router.post("/:id/accept", authenticateToken, acceptTask);
 
 // COMPLETE TASK (protected)
-router.put("/complete/:id", authenticateToken, completeTask);
+// POST /api/tasks/:id/complete
+router.post("/:id/complete", authenticateToken, completeTask);
 
 module.exports = router;

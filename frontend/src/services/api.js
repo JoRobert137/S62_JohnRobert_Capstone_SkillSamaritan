@@ -4,7 +4,7 @@ import axios from 'axios';
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api';
 
 // Create axios instance
-const api = axios.create({
+const API = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -12,11 +12,11 @@ const api = axios.create({
 });
 
 // Request interceptor - automatically attach Authorization header
-api.interceptors.request.use(
+API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = 'Bearer ' + token;
     }
     return config;
   },
@@ -26,7 +26,7 @@ api.interceptors.request.use(
 );
 
 // Response interceptor - handle 401 globally
-api.interceptors.response.use(
+API.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -56,18 +56,13 @@ export const authAPI = {
    * Login user
    * @param {Object} credentials - { email, password }
    */
-  login: (credentials) => api.post('/auth/login', credentials),
+  login: (credentials) => API.post('/auth/login', credentials),
 
   /**
    * Signup new user
    * @param {Object} userData - { name, email, password, skills }
    */
-  signup: (userData) => api.post('/auth/signup', userData),
-
-  /**
-   * Get current user profile
-   */
-  getProfile: () => api.get('/auth/profile'),
+  signup: (userData) => API.post('/auth/signup', userData),
 };
 
 // ============================================
@@ -79,44 +74,31 @@ export const taskAPI = {
    * Get all tasks
    * @param {Object} params - Optional query parameters (status, search, etc.)
    */
-  getAllTasks: (params = {}) => api.get('/tasks', { params }),
+  getAllTasks: () => API.get('/tasks'),
 
   /**
    * Get single task by ID
    * @param {string} taskId
    */
-  getTaskById: (taskId) => api.get(`/tasks/${taskId}`),
+  getTaskById: (taskId) => API.get('/tasks/' + taskId),
 
   /**
    * Create new task
    * @param {Object} taskData - { title, description, points, skillsRequired }
    */
-  createTask: (taskData) => api.post('/tasks', taskData),
+  createTask: (taskData) => API.post('/tasks', taskData),
 
   /**
    * Accept a task
    * @param {string} taskId
    */
-  acceptTask: (taskId) => api.put(`/tasks/accept/${taskId}`),
+  acceptTask: (taskId) => API.post('/tasks/' + taskId + '/accept'),
 
   /**
    * Complete a task
    * @param {string} taskId
    */
-  completeTask: (taskId) => api.put(`/tasks/complete/${taskId}`),
-
-  /**
-   * Update task
-   * @param {string} taskId
-   * @param {Object} taskData
-   */
-  updateTask: (taskId, taskData) => api.put(`/tasks/${taskId}`, taskData),
-
-  /**
-   * Delete task
-   * @param {string} taskId
-   */
-  deleteTask: (taskId) => api.delete(`/tasks/${taskId}`),
+  completeTask: (taskId) => API.post('/tasks/' + taskId + '/complete'),
 };
 
 // ============================================
@@ -127,39 +109,15 @@ export const userAPI = {
   /**
    * Get all users
    */
-  getAllUsers: () => api.get('/users'),
-
-  /**
-   * Get user by ID
-   * @param {string} userId
-   */
-  getUserById: (userId) => api.get(`/users/${userId}`),
+  getAllUsers: () => API.get('/users'),
 
   /**
    * Update user profile
    * @param {string} userId
    * @param {Object} userData
    */
-  updateUser: (userId, userData) => api.put(`/users/${userId}`, userData),
-
-  /**
-   * Get user's tasks (created and accepted)
-   * @param {string} userId
-   */
-  getUserTasks: (userId) => api.get(`/users/${userId}/tasks`),
-};
-
-// ============================================
-// Contact API Methods
-// ============================================
-
-export const contactAPI = {
-  /**
-   * Send contact form message
-   * @param {Object} contactData - { name, email, subject, message }
-   */
-  sendMessage: (contactData) => api.post('/contact', contactData),
+  updateUser: (userId, userData) => API.put('/users/' + userId, userData),
 };
 
 // Export the configured axios instance as default
-export default api;
+export default API;

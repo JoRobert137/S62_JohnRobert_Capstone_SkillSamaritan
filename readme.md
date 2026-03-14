@@ -1,5 +1,19 @@
 # SkillSamaritan - A Local Skill-Sharing Platform
 
+## Project Structure
+```text
+SkillSamaritan/
+├── backend/
+│   ├── models/
+│   ├── controllers/
+│   ├── routes/
+│   └── server.js
+├── frontend/
+│   ├── components/
+│   ├── pages/
+│   └── App.jsx
+```
+
 ## Problem Statement
 People often possess unique skills but lack a platform to share them locally and effectively. Many individuals either struggle to find learning opportunities from skilled individuals or have difficulty completing tasks due to a lack of assistance. There is no structured way to exchange such essential yet simple skills within a community.
 
@@ -74,45 +88,6 @@ People often possess unique skills but lack a platform to share them locally and
 - Friendship requests and notifications to approve or reject friendship requests.
 - No points are required for tasks completed between friends, encouraging collaboration and building stronger community bonds.
 - The friendship system will allow users to have a trusted circle for help, reducing task costs in terms of points.
-
-## Development Phases
-### Week 1-2: Planning and Frontend Development
-#### Planning
-- Define the overall workflow and user journey.
-- Create wireframes for pages like Home, Dashboard, Task Details, Profile, and Friendship system.
-
-#### Frontend Design
-- Develop static pages with navigation (Home, Profile, Task Feed).
-- Style pages using CSS/Tailwind/Bootstrap.
-
-### Week 3-4: Backend Development
-#### Setting Up the Server
-- Build schemas for users, tasks, points, reviews, and help requests.
-- Set up authentication (JWT-based login).
-
-#### API Development
-- Create RESTful APIs for CRUD operations on tasks, users, points, and help requests.
-- Set up middleware for security (e.g., JWT verification) and error handling.
-
-### Week 5: Points and Leaderboard System
-- Design the points allocation and escrow logic.
-- Build the leaderboard system to rank users based on points.
-- Implement APIs for dynamically retrieving and calculating points.
-
-### Week 6: Community and Gamification
-- Implement task posting in a public feed.
-- Add a commenting system for task discussions.
-- Integrate badges and rewards for gamification.
-
-### Week 7: Testing, Notifications, and Analytics
-- Test APIs, database operations, and UI responsiveness.
-- Add basic activity analytics (e.g., tasks completed, points earned).
-
-### Week 8: Finalization
-- Polish the UI for a seamless user experience.
-- Optimize database queries and backend performance.
-- Write unit tests and containerize the application with Docker.
-- Implement Google Meet and Calendar integration for task scheduling and virtual meetings.
 
 ## THANK YOU
 

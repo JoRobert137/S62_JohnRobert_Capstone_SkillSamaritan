@@ -1,7 +1,5 @@
-/* eslint-disable no-unused-vars */
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, User, MessageCircle, Sparkles } from 'lucide-react';
-import { contactAPI } from '../services/api';
 
 const ContactPage = () => {
   const [form, setForm] = useState({
@@ -22,12 +20,12 @@ const ContactPage = () => {
     setIsLoading(true);
 
     try {
-      await contactAPI.sendMessage(form);
-      
-      setMessage({ type: "success", text: "Message sent successfully! We'll get back to you soon." });
-      setForm({ name: "", email: "", subject: "", message: "" });
-    } catch (err) {
-      setMessage({ type: "error", text: "Failed to send message. Please try again." });
+      // Contact endpoint is not available in the current backend contract.
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      setMessage({
+        type: 'error',
+        text: 'Contact API is not configured yet. Please reach support via email.',
+      });
     } finally {
       setIsLoading(false);
     }

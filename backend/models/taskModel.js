@@ -32,8 +32,20 @@ const taskSchema = new mongoose.Schema(
       enum: ["open", "accepted", "completed"],
       default: "open",
     },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
+
+// Prevent creator from accepting their own task
+taskSchema.pre("save", function (next) {
+  if (this.acceptedBy && this.createdBy.equals(this.acceptedBy)) {
+    return next(new Error("Task creator cannot accept their own task"));
+  }
+  next();
+});
 
 module.exports = mongoose.model("Task", taskSchema);
