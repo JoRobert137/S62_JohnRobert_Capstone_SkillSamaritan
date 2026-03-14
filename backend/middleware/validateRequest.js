@@ -1,20 +1,13 @@
-const validateRequest = (validator) => {
-  return (req, res, next) => {
-    if (typeof validator !== "function") {
-      return next();
-    }
+const { validationResult } = require("express-validator");
 
-    const validationResult = validator(req);
+const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
 
-    if (!validationResult || validationResult.isValid !== false) {
-      return next();
-    }
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-    const statusCode = validationResult.error?.statusCode || 400;
-    const message = validationResult.error?.message || "Bad request";
-
-    return res.status(statusCode).json({ message });
-  };
+  return next();
 };
 
 module.exports = validateRequest;

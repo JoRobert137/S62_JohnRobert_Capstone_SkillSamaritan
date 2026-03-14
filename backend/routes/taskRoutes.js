@@ -4,10 +4,12 @@ const router = express.Router();
 const taskController = require("../controllers/taskController");
 
 const authenticateToken = require("../middleware/auth");
+const validateRequest = require("../middleware/validateRequest");
+const { createTaskValidation } = require("../utils/validationSchemas");
 
 // CREATE TASK (protected)
 // POST /api/tasks
-router.post("/", authenticateToken, taskController.createTask);
+router.post("/", authenticateToken, createTaskValidation, validateRequest, taskController.createTask);
 
 // GET ALL TASKS (public feed)
 // GET /api/tasks
