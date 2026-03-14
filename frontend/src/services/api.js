@@ -36,9 +36,9 @@ API.interceptors.response.use(
       // Clear auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
-      // Redirect to login page
-      window.location.href = '/login';
+
+      // Notify app to navigate using React Router
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       
       return Promise.reject(new Error('Session expired. Please login again.'));
     }

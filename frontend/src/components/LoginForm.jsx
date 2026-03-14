@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
@@ -12,11 +12,7 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
-
-  // Get the route user was trying to access before being redirected to login
-  const from = location.state?.from || '/dashboard';
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,8 +30,8 @@ const LoginForm = () => {
 
       setMessage("Login successful! Redirecting...");
 
-      // Redirect to the route user was trying to access, or dashboard
-      navigate(from, { replace: true });
+      // Redirect to dashboard after login
+      navigate('/dashboard', { replace: true });
 
     } catch (err) {
       const errMsg = err.response?.data?.message || "Login failed!";
@@ -96,9 +92,9 @@ const LoginForm = () => {
             </div>
 
             <div className="text-right">
-              <a href="/forgot-password" className="text-sm text-green-600 hover:text-green-700 hover:underline transition-colors">
+              <Link to="/login" className="text-sm text-green-600 hover:text-green-700 hover:underline transition-colors">
                 Forgot your password?
-              </a>
+              </Link>
             </div>
 
             <button
@@ -126,12 +122,12 @@ const LoginForm = () => {
           <div className="text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <a 
-                href="/signup" 
+              <Link 
+                to="/signup" 
                 className="text-green-600 hover:text-green-700 font-semibold hover:underline transition-colors"
               >
                 Join the Community
-              </a>
+              </Link>
             </p>
           </div>
         </div>

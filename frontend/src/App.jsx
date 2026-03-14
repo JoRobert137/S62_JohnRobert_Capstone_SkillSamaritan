@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,8 +9,23 @@ import TaskForm from './pages/TaskForm';
 import TaskFeedPage from './pages/TaskFeedPage';
 import TaskDetail from './pages/TaskDetail';
 import ContactPage from './pages/ContactPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      navigate('/login', { replace: true });
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [navigate]);
+
   return (
     <div>
       
@@ -52,6 +67,14 @@ function App() {
               <TaskDetail />
             </ProtectedRoute>
           } 
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </div>

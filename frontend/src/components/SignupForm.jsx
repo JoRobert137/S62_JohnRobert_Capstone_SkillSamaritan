@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Sparkles, Tags } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
@@ -13,14 +13,10 @@ const SignupForm = () => {
   });
   
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({type: "", text: ""});
-
-  // Get the route user was trying to access before being redirected
-  const from = location.state?.from || '/dashboard';
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -38,8 +34,8 @@ const SignupForm = () => {
 
     setMessage({ type: "success", text: "Account created! Redirecting..." });
 
-    // Redirect to the route user was trying to access, or dashboard
-    setTimeout(() => navigate(from, { replace: true }), 1200);
+    // Redirect to dashboard after signup
+    setTimeout(() => navigate('/dashboard', { replace: true }), 1200);
 
     setForm({ name: "", email: "", password: "" });
 
@@ -152,12 +148,12 @@ const SignupForm = () => {
           <div className="text-center">
             <p className="text-gray-600">
               Already a member?{' '}
-              <a 
-                href="/login" 
+              <Link 
+                to="/login" 
                 className="text-green-600 hover:text-green-700 font-semibold hover:underline transition-colors"
               >
                 Log in to your account
-              </a>
+              </Link>
             </p>
           </div>
         </div>

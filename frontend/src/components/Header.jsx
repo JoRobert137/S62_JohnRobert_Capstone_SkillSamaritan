@@ -72,7 +72,10 @@ const Header = () => {
                     <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
                   </button>
                   
-                  <button className="p-2 rounded-lg hover:bg-green-50 transition-colors duration-200 group">
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="p-2 rounded-lg hover:bg-green-50 transition-colors duration-200 group"
+                  >
                     <User className="w-5 h-5 text-gray-600 group-hover:text-green-600 transition-colors" />
                   </button>
 
