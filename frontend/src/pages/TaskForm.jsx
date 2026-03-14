@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskAPI } from "../services/api";
 import { Pencil, Tags, Coins, FileText, Sparkles } from "lucide-react";
+import toast from "react-hot-toast";
 
 const TaskForm = () => {
   const [form, setForm] = useState({
@@ -12,7 +13,6 @@ const TaskForm = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [pointsError, setPointsError] = useState("");
   const navigate = useNavigate();
 
@@ -50,17 +50,16 @@ const TaskForm = () => {
       });
 
       if (Number(form.points) < 20) {
-        setMessage("Please enter at least 20 points.");
+        toast.error("Please enter at least 20 points.");
         setIsLoading(false);
         return;
     }
 
-
-      setMessage("Task created successfully!");
+      toast.success("Task created successfully!");
       setTimeout(() => navigate("/tasks"), 1200);
 
     } catch (err) {
-      setMessage(err.response?.data?.message || "Failed to create task.");
+      toast.error(err.response?.data?.message || "Failed to create task.");
     } finally {
       setIsLoading(false);
     }
@@ -77,16 +76,6 @@ const TaskForm = () => {
         </div>
 
         <div className="p-8">
-          {message && (
-            <div className={`mb-6 p-4 rounded-lg text-center border ${
-              message.includes("success") 
-                ? "bg-green-100 text-green-700 border-green-200" 
-                : "bg-red-100 text-red-700 border-red-200"
-            }`}>
-              {message}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">

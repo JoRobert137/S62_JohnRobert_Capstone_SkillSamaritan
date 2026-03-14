@@ -1,263 +1,551 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { taskAPI } from '../services/api';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { 
-  Plus, 
-  Clock, 
-  CheckCircle, 
-  Coins, 
-  TrendingUp, 
+import toast from 'react-hot-toast';
+import EmptyState from '../components/EmptyState';
+import {
+  Bell,
+  CheckCircle,
+  CircleDollarSign,
+  Clock3,
+  Crown,
+  LayoutDashboard,
+  ListChecks,
+  Medal,
+  Plus,
+  Search,
+  Settings,
+  Trophy,
   User,
-  Award,
-  BookmarkCheck
+  Users,
+  Inbox,
 } from 'lucide-react';
+
+const sidebarItems = [
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { key: 'feed', label: 'Task Feed', icon: ListChecks, path: '/tasks' },
+  { key: 'myTasks', label: 'My Tasks', icon: Clock3, path: '/tasks' },
+  { key: 'create', label: 'Create Task', icon: Plus, path: '/create-task' },
+  { key: 'leaderboard', label: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
+  { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
+  { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+];
+
+const getStatusClasses = (status) => {
+  if (status === 'completed') {
+    return 'bg-green-100 text-green-700 border border-green-200';
+  }
+  if (status === 'accepted') {
+    return 'bg-teal-100 text-teal-700 border border-teal-200';
+  }
+  return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+};
+
+const StatCard = ({ icon: Icon, label, value, accent }) => (
+  <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-xl">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">{label}</p>
+        <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
+      </div>
+      <div className="rounded-xl bg-green-50 p-3">
+        {React.createElement(Icon, { className: `h-5 w-5 ${accent}` })}
+      </div>
+    </div>
+  </div>
+);
+
+const TaskCard = ({ task, rightMeta, onOpen }) => (
+  <button
+    type="button"
+    onClick={onOpen}
+    className="w-full rounded-2xl border border-green-100 bg-white p-4 text-left shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-green-200 hover:shadow-xl"
+  >
+    <div className="mb-2 flex items-start justify-between gap-3">
+      <h4 className="line-clamp-1 text-sm font-semibold text-gray-900">{task.title}</h4>
+      <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium capitalize ${getStatusClasses(task.status)}`}>
+        {task.status || 'open'}
+      </span>
+    </div>
+    <p className="line-clamp-2 text-xs text-gray-600">{task.description || 'No description provided.'}</p>
+    <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
+      <div className="flex items-center gap-1.5">
+        <CircleDollarSign className="h-3.5 w-3.5 text-yellow-500" />
+        <span>{task.points || 0} pts</span>
+      </div>
+      <span className="text-gray-500">{rightMeta}</span>
+    </div>
+  </button>
+);
+
+const LeaderboardItem = ({ rank, user: boardUser }) => (
+  <li className="flex items-center justify-between rounded-2xl border border-green-100 bg-white px-3 py-2.5 shadow-lg transition-colors duration-300 hover:border-green-200 hover:shadow-xl">
+    <div className="flex items-center gap-3">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
+        {boardUser.name?.charAt(0)?.toUpperCase() || 'U'}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-900">{boardUser.name}</p>
+        <p className="text-xs text-gray-500">Rank #{rank}</p>
+      </div>
+    </div>
+    <div className="flex items-center gap-1 text-sm font-semibold text-yellow-600">
+      <Crown className="h-4 w-4" />
+      <span>{boardUser.points} pts</span>
+    </div>
+  </li>
+);
 
 const Dashboard = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+
   const [stats, setStats] = useState({
     createdTasks: [],
     acceptedTasks: [],
     completedCount: 0,
-    totalPoints: user?.points || 0
+    totalPoints: user?.pointsBalance || user?.points || 0,
+    activeTasks: 0,
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserTasks = async () => {
       try {
         const res = await taskAPI.getAllTasks();
+        const allTasks = Array.isArray(res.data) ? res.data : [];
+        const userId = user?._id || user?.id;
 
-        const allTasks = res.data;
-        const userId = user._id || user.id;
-
-        // Filter tasks created by user
-        const created = allTasks.filter(task => 
-          task.createdBy?._id === userId || task.createdBy === userId
+        const created = allTasks.filter(
+          (task) => task.createdBy?._id === userId || task.createdBy === userId
         );
 
-        // Filter tasks accepted by user
-        const accepted = allTasks.filter(task => 
-          task.acceptedBy?._id === userId || task.acceptedBy === userId
+        const accepted = allTasks.filter(
+          (task) => task.acceptedBy?._id === userId || task.acceptedBy === userId
         );
 
-        // Count completed tasks
-        const completed = accepted.filter(task => task.status === 'completed').length;
+        const completed = accepted.filter((task) => task.status === 'completed').length;
 
         setStats({
           createdTasks: created.slice(0, 5),
           acceptedTasks: accepted.slice(0, 5),
           completedCount: completed,
-          totalPoints: user?.points || 0
+          totalPoints: user?.pointsBalance || user?.points || 0,
+          activeTasks: created.filter((task) => task.status !== 'completed').length,
         });
       } catch (err) {
         console.error('Error fetching tasks:', err);
+        toast.error(err?.response?.data?.message || 'Failed to load dashboard data.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserTasks();
+    if (user) {
+      fetchUserTasks();
+    } else {
+      setLoading(false);
+    }
   }, [token, user]);
 
-  const StatCard = ({ icon, label, value, color }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{label}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`p-4 rounded-full ${color}`}>
-          {React.createElement(icon, { className: "w-6 h-6 text-white" })}
-        </div>
-      </div>
-    </div>
+  const filteredCreatedTasks = useMemo(
+    () =>
+      stats.createdTasks.filter((task) =>
+        task.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [stats.createdTasks, searchQuery]
   );
 
-  const TaskCard = ({ task, type }) => (
-    <div 
-      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => navigate(`/tasks/${task._id}`)}
-    >
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">{task.title}</h4>
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          task.status === 'completed' ? 'bg-green-100 text-green-700' :
-          task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-          'bg-orange-100 text-orange-700'
-        }`}>
-          {task.status || 'open'}
-        </span>
-      </div>
-      <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <div className="flex items-center gap-1">
-          <Coins className="w-3 h-3" />
-          <span>{task.points} pts</span>
-        </div>
-        {type === 'created' && task.acceptedBy && (
-          <div className="flex items-center gap-1">
-            <User className="w-3 h-3" />
-            <span>Accepted</span>
-          </div>
-        )}
-      </div>
-    </div>
+  const filteredAcceptedTasks = useMemo(
+    () =>
+      stats.acceptedTasks.filter((task) =>
+        task.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [stats.acceptedTasks, searchQuery]
   );
+
+  const activityFeed = useMemo(() => {
+    const items = [];
+
+    stats.acceptedTasks
+      .filter((task) => task.status === 'completed')
+      .slice(0, 2)
+      .forEach((task) => {
+        items.push({
+          id: `done-${task._id}`,
+          text: `${user?.name || 'A helper'} completed ${task.createdBy?.name || 'a'} task`,
+          when: 'Recently',
+        });
+      });
+
+    stats.createdTasks.slice(0, 2).forEach((task) => {
+      items.push({
+        id: `new-${task._id}`,
+        text: `${user?.name || 'Someone'} created a new task: ${task.title}`,
+        when: 'Today',
+      });
+    });
+
+    if (stats.completedCount > 0) {
+      items.push({
+        id: 'points-earned',
+        text: `${user?.name || 'You'} earned ${stats.completedCount * 10} points`,
+        when: 'This week',
+      });
+    }
+
+    return items.slice(0, 5);
+  }, [stats, user]);
+
+  const leaderboardUsers = useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
+    const localBoard = [
+      { name: user?.name || 'You', points: stats.totalPoints || 0 },
+      { name: 'Alex', points: Math.max((stats.totalPoints || 0) + 30, 120) },
+      { name: 'Maria', points: Math.max((stats.totalPoints || 0) + 18, 95) },
+      { name: 'Sam', points: Math.max((stats.totalPoints || 0) + 12, 80) },
+      { name: 'Nina', points: Math.max((stats.totalPoints || 0) - 8, 72) },
+    ];
+
+    return localBoard.sort((a, b) => b.points - a.points).slice(0, 5);
+  }, [stats.totalPoints, user]);
 
   if (loading) {
     return (
-      <>
-        <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading dashboard...</p>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 text-gray-900">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+          <div className="mb-6 rounded-2xl border border-green-100 bg-white p-5 shadow-lg">
+            <div className="mb-3 h-7 w-1/3 animate-pulse rounded bg-green-100" />
+            <div className="h-4 w-1/2 animate-pulse rounded bg-green-100" />
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={`stat-skeleton-${index}`} className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg">
+                <div className="mb-3 h-3 w-20 animate-pulse rounded bg-green-100" />
+                <div className="mb-4 h-7 w-14 animate-pulse rounded bg-green-100" />
+                <div className="h-10 w-10 animate-pulse rounded-xl bg-green-100" />
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, colIndex) => (
+              <div key={`task-col-skeleton-${colIndex}`} className="space-y-3">
+                {Array.from({ length: 3 }).map((__, rowIndex) => (
+                  <div key={`task-skeleton-${colIndex}-${rowIndex}`} className="rounded-2xl border border-green-100 bg-white p-4 shadow-lg">
+                    <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-green-100" />
+                    <div className="mb-2 h-3 w-full animate-pulse rounded bg-green-100" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-green-100" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 space-y-2.5">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={`feed-skeleton-${index}`} className="rounded-2xl border border-green-100 bg-white p-4 shadow-lg">
+                <div className="mb-2 h-3 w-2/3 animate-pulse rounded bg-green-100" />
+                <div className="h-3 w-1/4 animate-pulse rounded bg-green-100" />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-3 text-gray-600">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-500 border-t-transparent" />
+            <span className="text-sm font-medium">Loading dashboard...</span>
           </div>
         </div>
-        <Footer />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Welcome back, {user?.name}! 👋
-            </h1>
-            <p className="text-gray-600">Here's what's happening with your tasks</p>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 text-gray-900">
+      <div className="flex min-h-screen">
+        <aside className="hidden w-72 border-r border-green-100 bg-white px-4 py-6 lg:flex lg:flex-col">
+          <div className="mb-10 px-2">
+            <h1 className="text-xl font-semibold tracking-tight text-gray-900">SkillSamaritan</h1>
+            <p className="mt-1 text-xs text-gray-500">Community task exchange</p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard 
-              icon={Coins} 
-              label="Total Points" 
-              value={stats.totalPoints}
-              color="bg-gradient-to-br from-green-500 to-teal-600"
-            />
-            <StatCard 
-              icon={Clock} 
-              label="Tasks Created" 
-              value={stats.createdTasks.length}
-              color="bg-gradient-to-br from-blue-500 to-blue-600"
-            />
-            <StatCard 
-              icon={BookmarkCheck} 
-              label="Tasks Accepted" 
-              value={stats.acceptedTasks.length}
-              color="bg-gradient-to-br from-purple-500 to-purple-600"
-            />
-            <StatCard 
-              icon={CheckCircle} 
-              label="Completed" 
-              value={stats.completedCount}
-              color="bg-gradient-to-br from-orange-500 to-orange-600"
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <button
-              onClick={() => navigate('/create-task')}
-              className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <Plus className="w-6 h-6" />
-              <span className="text-lg font-semibold">Create New Task</span>
-            </button>
-            <button
-              onClick={() => navigate('/tasks')}
-              className="bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <TrendingUp className="w-6 h-6" />
-              <span className="text-lg font-semibold">Browse All Tasks</span>
-            </button>
-          </div>
-
-          {/* Tasks Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* My Created Tasks */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-green-600" />
-                  My Created Tasks
-                </h2>
-                <button 
-                  onClick={() => navigate('/tasks')}
-                  className="text-sm text-green-600 hover:text-green-700 font-medium"
+          <nav className="space-y-1">
+            {sidebarItems.map(({ key, label, icon: Icon, path }) => {
+              const isActive = key === 'dashboard';
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-300 ${
+                    isActive
+                      ? 'bg-green-100 text-green-700'
+                      : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                  }`}
                 >
-                  View All
+                  {React.createElement(Icon, { className: 'h-4 w-4' })}
+                  <span>{label}</span>
                 </button>
+              );
+            })}
+          </nav>
+
+          <div className="mt-auto rounded-2xl border border-green-100 bg-white p-4 shadow-lg">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Your balance</p>
+            <p className="mt-2 text-2xl font-semibold text-green-700">{stats.totalPoints} pts</p>
+          </div>
+        </aside>
+
+        <main className="flex-1">
+          <header className="sticky top-0 z-20 border-b border-green-100 bg-white px-4 py-4 shadow-sm md:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 lg:hidden">
+                <h1 className="text-lg font-semibold tracking-tight text-gray-900">SkillSamaritan</h1>
               </div>
-              
-              {stats.createdTasks.length > 0 ? (
-                <div className="space-y-3">
-                  {stats.createdTasks.map(task => (
-                    <TaskCard key={task._id} task={task} type="created" />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">No tasks created yet</p>
+
+              <div className="relative w-full max-w-xl">
+                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search tasks"
+                  className="w-full rounded-xl border border-green-100 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-xl border border-green-100 bg-white p-2 text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700"
+                >
+                  <Bell className="h-4 w-4" />
+                </button>
+
+                <div className="relative">
                   <button
-                    onClick={() => navigate('/create-task')}
-                    className="text-green-600 hover:text-green-700 font-medium"
+                    type="button"
+                    onClick={() => setMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-2 rounded-xl border border-green-100 bg-white px-2.5 py-1.5 text-sm text-gray-700"
                   >
-                    Create your first task
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    <span className="hidden sm:block">{user?.name || 'User'}</span>
                   </button>
+
+                  {menuOpen ? (
+                    <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-green-100 bg-white text-sm shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/profile')}
+                        className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-green-50"
+                      >
+                        Profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/tasks')}
+                        className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-green-50"
+                      >
+                        My Tasks
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/login')}
+                        className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* My Accepted Tasks */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-green-600" />
-                  My Accepted Tasks
-                </h2>
-                <button 
-                  onClick={() => navigate('/tasks')}
-                  className="text-sm text-green-600 hover:text-green-700 font-medium"
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+              {sidebarItems.map(({ key, label, icon: Icon, path }) => (
+                <button
+                  key={`mobile-${key}`}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${
+                    key === 'dashboard'
+                      ? 'border-green-200 bg-green-100 text-green-700'
+                      : 'border-green-100 bg-white text-gray-700'
+                  }`}
                 >
-                  View All
+                  {React.createElement(Icon, { className: 'h-3.5 w-3.5' })}
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <section className="px-4 py-6 md:px-6">
+            <div className="mb-6 rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-green-200 hover:shadow-xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+                Welcome back, {user?.name || 'Friend'}
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">Help others, earn points, grow your community</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard icon={CircleDollarSign} label="Total Points" value={stats.totalPoints} accent="text-green-600" />
+              <StatCard icon={Plus} label="Tasks Created" value={stats.createdTasks.length} accent="text-teal-600" />
+              <StatCard icon={CheckCircle} label="Tasks Completed" value={stats.completedCount} accent="text-yellow-500" />
+              <StatCard icon={Clock3} label="Active Tasks" value={stats.activeTasks} accent="text-green-600" />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:border-green-200 hover:shadow-xl">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-gray-900">Recent Tasks Created</h3>
+                  <button type="button" onClick={() => navigate('/tasks')} className="text-xs text-green-700 hover:text-green-800">View all</button>
+                </div>
+                <div className="space-y-3">
+                  {filteredCreatedTasks.length > 0 ? (
+                    filteredCreatedTasks.map((task) => (
+                      <TaskCard
+                        key={task._id}
+                        task={task}
+                        rightMeta={task.acceptedBy ? 'Accepted' : 'Awaiting helper'}
+                        onOpen={() => navigate(`/tasks/${task._id}`)}
+                      />
+                    ))
+                  ) : (
+                    <EmptyState
+                      icon={<Inbox className="h-5 w-5 text-green-600" />}
+                      title="No tasks yet"
+                      description="Create your first task and start helping the community."
+                      actionLabel="Create Task"
+                      onAction={() => navigate('/create-task')}
+                      className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600 [&>button]:bg-gradient-to-r [&>button]:from-green-500 [&>button]:to-teal-600 [&>button]:text-white [&>button]:border-0 [&>button]:hover:from-green-600 [&>button]:hover:to-teal-700"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:border-green-200 hover:shadow-xl">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-gray-900">Tasks You&apos;ve Accepted</h3>
+                  <button type="button" onClick={() => navigate('/tasks')} className="text-xs text-green-700 hover:text-green-800">View all</button>
+                </div>
+                <div className="space-y-3">
+                  {filteredAcceptedTasks.length > 0 ? (
+                    filteredAcceptedTasks.map((task) => (
+                      <TaskCard
+                        key={task._id}
+                        task={task}
+                        rightMeta={`Creator: ${task.createdBy?.name || 'Unknown'}`}
+                        onOpen={() => navigate(`/tasks/${task._id}`)}
+                      />
+                    ))
+                  ) : (
+                    <EmptyState
+                      icon={<Inbox className="h-5 w-5 text-green-600" />}
+                      title="No accepted tasks"
+                      description="Browse available tasks and accept one to start earning points."
+                      actionLabel="Browse Tasks"
+                      onAction={() => navigate('/tasks')}
+                      className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600 [&>button]:bg-gradient-to-r [&>button]:from-green-500 [&>button]:to-teal-600 [&>button]:text-white [&>button]:border-0 [&>button]:hover:from-green-600 [&>button]:hover:to-teal-700"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:border-green-200 hover:shadow-xl">
+              <h3 className="mb-4 text-base font-semibold text-gray-900">Quick Actions</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/create-task')}
+                  className="rounded-xl bg-gradient-to-r from-green-500 to-teal-600 px-4 py-3 text-sm font-medium text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-green-600 hover:to-teal-700 hover:shadow-lg"
+                >
+                  Create New Task
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/tasks')}
+                  className="rounded-xl bg-gradient-to-r from-green-500 to-teal-600 px-4 py-3 text-sm font-medium text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-green-600 hover:to-teal-700 hover:shadow-lg"
+                >
+                  Browse Tasks
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/leaderboard')}
+                  className="rounded-xl bg-gradient-to-r from-green-500 to-teal-600 px-4 py-3 text-sm font-medium text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-green-600 hover:to-teal-700 hover:shadow-lg"
+                >
+                  View Leaderboard
                 </button>
               </div>
-              
-              {stats.acceptedTasks.length > 0 ? (
-                <div className="space-y-3">
-                  {stats.acceptedTasks.map(task => (
-                    <TaskCard key={task._id} task={task} type="accepted" />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">No tasks accepted yet</p>
-                  <button
-                    onClick={() => navigate('/tasks')}
-                    className="text-green-600 hover:text-green-700 font-medium"
-                  >
-                    Browse available tasks
-                  </button>
-                </div>
-              )}
             </div>
-          </div>
-        </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:border-green-200 hover:shadow-xl">
+                <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900">
+                  <Users className="h-4 w-4 text-teal-600" />
+                  Community Activity Feed
+                </h3>
+
+                <ul className="space-y-2.5">
+                  {activityFeed.length > 0 ? (
+                    activityFeed.map((activity) => (
+                      <li
+                        key={activity.id}
+                        className="rounded-xl border border-green-100 bg-white px-3 py-2.5 transition-colors hover:border-green-200"
+                      >
+                        <p className="text-sm text-gray-800">{activity.text}</p>
+                        <p className="mt-1 text-xs text-gray-500">{activity.when}</p>
+                      </li>
+                    ))
+                  ) : (
+                    <li>
+                      <EmptyState
+                        icon={<Users className="h-5 w-5 text-teal-600" />}
+                        title="No activity yet"
+                        description="Community activity will appear here once members start completing tasks."
+                        className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600"
+                      />
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-lg transition-all duration-300 hover:border-green-200 hover:shadow-xl">
+                <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900">
+                  <Medal className="h-4 w-4 text-yellow-500" />
+                  Leaderboard Preview
+                </h3>
+                <ol className="space-y-2.5">
+                  {leaderboardUsers.length > 0 ? (
+                    leaderboardUsers.map((boardUser, index) => (
+                      <LeaderboardItem key={`${boardUser.name}-${index}`} rank={index + 1} user={boardUser} />
+                    ))
+                  ) : (
+                    <li>
+                      <EmptyState
+                        icon={<Medal className="h-5 w-5 text-yellow-500" />}
+                        title="No leaderboard data"
+                        description="Leaderboard rankings will appear after users start earning points."
+                        className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600"
+                      />
+                    </li>
+                  )}
+                </ol>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 };
 

@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -12,18 +13,16 @@ const ProfilePage = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [skills, setSkills] = useState(Array.isArray(user?.skills) ? user.skills.join(', ') : '');
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user?._id && !user?.id) {
-      setMessage({ type: 'error', text: 'Unable to find user profile id.' });
+      toast.error('Unable to find user profile id.');
       return;
     }
 
     setIsSaving(true);
-    setMessage({ type: '', text: '' });
 
     try {
       const userId = user._id || user.id;
@@ -40,12 +39,9 @@ const ProfilePage = () => {
       const updatedUser = response.data?.user || response.data;
 
       login(token, updatedUser);
-      setMessage({ type: 'success', text: 'Profile updated successfully.' });
+      toast.success('Profile updated successfully.');
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || 'Failed to update profile.',
-      });
+      toast.error(error.response?.data?.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
@@ -58,18 +54,6 @@ const ProfilePage = () => {
         <div className="max-w-2xl mx-auto bg-white border border-gray-100 rounded-2xl shadow-lg p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
           <p className="text-gray-600 mb-8">Manage your account details and skills.</p>
-
-          {message.text && (
-            <div
-              className={`mb-6 p-4 rounded-lg border ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-700 border-green-200'
-                  : 'bg-red-50 text-red-700 border-red-200'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
