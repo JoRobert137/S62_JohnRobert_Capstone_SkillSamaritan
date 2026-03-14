@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 
 const LoginForm = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -11,6 +12,11 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  // Get the route user was trying to access before being redirected to login
+  const from = location.state?.from || '/dashboard';
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,14 +27,15 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post('https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/auth/login', form);
+      const res = await authAPI.login(form);
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // Use AuthContext login method
+      login(res.data.token, res.data.user);
 
       setMessage("Login successful! Redirecting...");
 
-      navigate("/dashboard");
+      // Redirect to the route user was trying to access, or dashboard
+      navigate(from, { replace: true });
 
     } catch (err) {
       const errMsg = err.response?.data?.message || "Login failed!";

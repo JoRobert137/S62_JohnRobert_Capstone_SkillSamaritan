@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { taskAPI } from "../services/api";
 import { Pencil, Tags, Coins, FileText, Sparkles } from "lucide-react";
 
 const TaskForm = () => {
@@ -37,25 +37,17 @@ const TaskForm = () => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-
       const skillsArray = form.skillsRequired
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s !== "");
 
-      await axios.post(
-        "https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks",
-        {
-          title: form.title,
-          description: form.description,
-          points: Number(form.points),
-          skillsRequired: skillsArray,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await taskAPI.createTask({
+        title: form.title,
+        description: form.description,
+        points: Number(form.points),
+        skillsRequired: skillsArray,
+      });
 
       if (Number(form.points) < 20) {
         setMessage("Please enter at least 20 points.");

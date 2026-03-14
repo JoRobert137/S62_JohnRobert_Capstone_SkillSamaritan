@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Clock, User, Star, Zap, MessageCircle, Tag, Search, Filter, Plus, Award, Users, Sparkles } from "lucide-react";
+import { Clock, User, Star, Zap, MessageCircle, Tag, Search, Filter, Plus, Award, Users, Sparkles, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { taskAPI } from "../services/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -50,11 +51,13 @@ const TaskFeedPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [actionLoading, setActionLoading] = useState(null);
   const navigate = useNavigate();
+  const { user, token, isAuthenticated } = useAuth();
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get("https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks");
+      const res = await taskAPI.getAllTasks();
       setTasks(res.data);
     } catch (error) {
       console.log("Error fetching tasks:", error);
@@ -66,25 +69,150 @@ const TaskFeedPage = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
-
-  const handleAccept = async (taskId) => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
+if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
+    setActionLoading(taskId);
     try {
-      await axios.put(
-        `https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/tasks/accept/${taskId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await taskAPI.acceptTask(taskId);
 
-      alert("Task accepted!");
-      fetchTasks();
+      alert("Task accepted successfully!");
+      await fetchTasks(); // Refresh task list
     } catch (error) {
+      alert(error.response?.data?.message || "Error accepting task");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleComplete = async (taskId) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionLoading(taskId);
+    try {
+      await taskAPI.completeTask(taskId);
+
+      alert("Task marked as complete!");
+      await fetchTasks(); // Refresh task list
+    } catch (error) {
+      alert(error.response?.data?.message || "Error completing task");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Check if current user is the task creator
+  const isTaskCreator = (task) => {
+    if (!user) return false;
+    const userId = user._id || user.id;
+    const creatorId = task.createdBy?._id || task.createdBy;
+    return userId === creatorId;
+  };
+
+  // Check if current user accepted this task
+  const isTaskAcceptor = (task) => {
+    if (!user || !task.acceptedBy) return false;
+    const userId = user._id || user.id;
+    const acceptorId = task.acceptedBy?._id || task.acceptedBy;
+    return userId === acceptorId;
+  };
+
+  // Render action buttons based on task status and user role
+  const renderTaskActions = (task) => {
+    const isLoading = actionLoading === task._id;
+
+    // Task is open - show accept button if user is not the creator
+    if (task.status === "open") {
+      if (isTaskCreator(task)) {
+        return (
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+              <User className="h-6 w-6 text-gray-600" />
+            </div>
+            <p className="text-gray-600 font-semibold text-sm">Your Task</p>
+            <p className="text-xs text-gray-500 mt-1">Waiting for helper</p>
+          </div>
+        );
+      }
+      return (
+        <Button 
+          onClick={() => handleAccept(task._id)}
+          disabled={isLoading}
+          className="whitespace-nowrap"
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Accepting...
+            </div>
+          ) : (
+            'Accept Task'
+          )}
+        </Button>
+      );
+    }
+
+    // Task is accepted - show complete button if user is the acceptor or creator
+    if (task.status === "accepted") {
+      if (isTaskAcceptor(task)) {
+        return (
+          <Button 
+            onClick={() => handleComplete(task._id)}
+            disabled={isLoading}
+            variant="secondary"
+            className="whitespace-nowrap"
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Completing...
+              </div>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark Complete
+              </>
+            )}
+          </Button>
+        );
+      }
+      if (isTaskCreator(task)) {
+        return (
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-2 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Users className="h-6 w-6 text-yellow-600" />
+            </div>
+            <p className="text-yellow-700 font-semibold text-sm">In Progress</p>
+            <p className="text-xs text-gray-600 mt-1">
+              By {task.acceptedBy?.name || 'helper'}
+            </p>
+          </div>
+        );
+      }
+      return (
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-2 bg-yellow-100 rounded-full flex items-center justify-center">
+            <Users className="h-6 w-6 text-yellow-600" />
+          </div>
+          <p className="text-yellow-700 font-semibold">In Progress</p>
+        </div>
+      );
+    }
+
+    // Task is completed
+    return (
+      <div className="text-center">
+        <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+          <Star className="h-6 w-6 text-blue-600" />
+        </div>
+        <p className="text-blue-700 font-semibold">Completed</p>
+      </div>
+    ); catch (error) {
       alert(error.response?.data?.message || "Error accepting task");
     }
   };
@@ -166,28 +294,7 @@ const TaskFeedPage = () => {
               <div className="text-sm text-gray-600">Completed</div>
             </div>
           </div>
-
-          <Card className="mb-8 hover:shadow-md">
-            <CardContent className="!p-6">
-              <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-80">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="text"
-                      placeholder="Search tasks, skills..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="relative w-full md:w-48">
-                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
+renderTaskActions(taskclassName="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="all">All Status</option>
                       <option value="open">Open</option>

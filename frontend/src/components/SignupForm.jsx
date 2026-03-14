@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Sparkles, Tags } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 
 const SignupForm = () => {
   const [form, setForm] = useState({
@@ -12,9 +13,14 @@ const SignupForm = () => {
   });
   
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({type: "", text: ""});
+
+  // Get the route user was trying to access before being redirected
+  const from = location.state?.from || '/dashboard';
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,16 +31,15 @@ const SignupForm = () => {
   setIsLoading(true);
 
   try {
-    const res = await axios.post('https://s62-johnrobert-capstone-skillsamaritan.onrender.com/api/auth/signup', {
-      ...form,
-    });
+    const res = await authAPI.signup(form);
 
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+    // Use AuthContext login method
+    login(res.data.token, res.data.user);
 
     setMessage({ type: "success", text: "Account created! Redirecting..." });
 
-    setTimeout(() => navigate("/dashboard"), 1200);
+    // Redirect to the route user was trying to access, or dashboard
+    setTimeout(() => navigate(from, { replace: true }), 1200);
 
     setForm({ name: "", email: "", password: "" });
 
