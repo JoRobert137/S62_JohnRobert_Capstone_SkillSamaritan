@@ -62,6 +62,7 @@ exports.signup = async (req, res) => {
       email,
       password: hashedPassword,
       skills: normalizedSkills,
+      points: 100,
     });
     await user.save();
 
