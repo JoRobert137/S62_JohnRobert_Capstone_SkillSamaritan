@@ -32,6 +32,7 @@ const buildAuthResponse = (message, user) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       points: user.points,
       skills: user.skills,
     },

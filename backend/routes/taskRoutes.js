@@ -4,6 +4,7 @@ const router = express.Router();
 const taskController = require("../controllers/taskController");
 
 const authenticateToken = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authorizeRole");
 const validateRequest = require("../middleware/validateRequest");
 const { createTaskValidation } = require("../utils/validationSchemas");
 
@@ -18,6 +19,10 @@ router.get("/", taskController.getAllTasks);
 // GET SINGLE TASK (public)
 // GET /api/tasks/:id
 router.get("/:id", taskController.getTaskById);
+
+// DELETE TASK (admin only)
+// DELETE /api/tasks/:id
+router.delete("/:id", authenticateToken, authorizeRoles("admin"), taskController.deleteTask);
 
 // ACCEPT TASK (protected)
 // POST /api/tasks/:id/accept

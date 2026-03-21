@@ -56,6 +56,13 @@ export const AuthProvider = ({ children }) => {
   }, [clearAuthState]);
 
   const isAuthenticated = !!token && !!user;
+  const hasRole = useCallback(
+    (role) => {
+      return Boolean(user?.role && user.role === role);
+    },
+    [user]
+  );
+  const isAdmin = hasRole('admin');
 
   const value = {
     user,
@@ -63,6 +70,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated,
+    hasRole,
+    isAdmin,
     loading,
   };
 

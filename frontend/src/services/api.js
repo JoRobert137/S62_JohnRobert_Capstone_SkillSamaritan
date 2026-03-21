@@ -99,6 +99,12 @@ export const taskAPI = {
    * @param {string} taskId
    */
   completeTask: (taskId) => API.post('/tasks/' + taskId + '/complete'),
+
+  /**
+   * Delete a task (admin only)
+   * @param {string} taskId
+   */
+  deleteTask: (taskId) => API.delete('/tasks/' + taskId),
 };
 
 // ============================================

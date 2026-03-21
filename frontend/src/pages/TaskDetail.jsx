@@ -40,7 +40,7 @@ const getStatusMeta = (status) => {
 const TaskDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
 
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -114,6 +114,29 @@ const TaskDetail = () => {
       await fetchTask();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to complete task");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!isAuthenticated || !isAdmin) {
+      toast.error("Only admin can delete tasks");
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this task?");
+    if (!confirmed) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await taskAPI.deleteTask(id);
+      toast.success("Task deleted successfully.");
+      navigate("/tasks", { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete task");
     } finally {
       setActionLoading(false);
     }
@@ -282,6 +305,16 @@ const TaskDetail = () => {
                     <Clock className="w-4 h-4" />
                     Task In Progress
                   </div>
+                )}
+
+                {isAuthenticated && isAdmin && (
+                  <button
+                    onClick={handleDeleteTask}
+                    disabled={actionLoading}
+                    className="mt-3 w-full sm:ml-3 sm:mt-0 sm:w-auto px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors disabled:opacity-60"
+                  >
+                    {actionLoading ? "Deleting..." : "Delete Task (Admin)"}
+                  </button>
                 )}
               </section>
             </div>
