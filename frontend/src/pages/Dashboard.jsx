@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { taskAPI } from '../services/api';
+import { taskAPI, userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import EmptyState from '../components/EmptyState';
 import {
@@ -98,7 +98,7 @@ const LeaderboardItem = ({ rank, user: boardUser }) => (
 );
 
 const Dashboard = () => {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -111,12 +111,26 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [leaderboardUsers, setLeaderboardUsers] = useState([]);
+
+  const handleLogout = () => {
+    logout();
+    setMenuOpen(false);
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
-    const fetchUserTasks = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await taskAPI.getAllTasks();
-        const allTasks = Array.isArray(res.data) ? res.data : [];
+        const [tasksResponse, leaderboardResponse] = await Promise.all([
+          taskAPI.getAllTasks(),
+          userAPI.getLeaderboard(),
+        ]);
+
+        const allTasks = Array.isArray(tasksResponse.data) ? tasksResponse.data : [];
+        const leaderboard = Array.isArray(leaderboardResponse.data)
+          ? leaderboardResponse.data
+          : [];
         const userId = user?._id || user?.id;
 
         const created = allTasks.filter(
@@ -136,16 +150,19 @@ const Dashboard = () => {
           totalPoints: user?.pointsBalance || user?.points || 0,
           activeTasks: created.filter((task) => task.status !== 'completed').length,
         });
+
+        setLeaderboardUsers(leaderboard.slice(0, 5));
       } catch (err) {
         console.error('Error fetching tasks:', err);
         toast.error(err?.response?.data?.message || 'Failed to load dashboard data.');
+        setLeaderboardUsers([]);
       } finally {
         setLoading(false);
       }
     };
 
     if (user) {
-      fetchUserTasks();
+      fetchDashboardData();
     } else {
       setLoading(false);
     }
@@ -199,22 +216,6 @@ const Dashboard = () => {
 
     return items.slice(0, 5);
   }, [stats, user]);
-
-  const leaderboardUsers = useMemo(() => {
-    if (!user) {
-      return [];
-    }
-
-    const localBoard = [
-      { name: user?.name || 'You', points: stats.totalPoints || 0 },
-      { name: 'Alex', points: Math.max((stats.totalPoints || 0) + 30, 120) },
-      { name: 'Maria', points: Math.max((stats.totalPoints || 0) + 18, 95) },
-      { name: 'Sam', points: Math.max((stats.totalPoints || 0) + 12, 80) },
-      { name: 'Nina', points: Math.max((stats.totalPoints || 0) - 8, 72) },
-    ];
-
-    return localBoard.sort((a, b) => b.points - a.points).slice(0, 5);
-  }, [stats.totalPoints, user]);
 
   if (loading) {
     return (
@@ -358,7 +359,7 @@ const Dashboard = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => navigate('/login')}
+                        onClick={handleLogout}
                         className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
                       >
                         Logout
@@ -393,7 +394,7 @@ const Dashboard = () => {
               <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
                 Welcome back, {user?.name || 'Friend'}
               </h2>
-              <p className="mt-2 text-sm text-gray-600">Help others, earn points, grow your community</p>
+              <p className="mt-2 text-sm text-gray-600">Your action hub for active tasks, quick actions, and community momentum.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

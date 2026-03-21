@@ -65,7 +65,7 @@ exports.validateAcceptance = (task, userId) => {
  * Validate task completion
  * Rules:
  * - Task must exist
- * - Task must be in "accepted" status
+ * - Task must be in "pending_verification" status
  * - Only task creator can complete it
  * - Task must have a helper assigned
  * - Creator must have sufficient points balance
@@ -85,12 +85,12 @@ exports.validateCompletion = (task, creator) => {
     };
   }
 
-  if (task.status !== "accepted") {
+  if (task.status !== "pending_verification") {
     return {
       isValid: false,
       error: {
         statusCode: 400,
-        message: `Cannot complete task. Task status is "${task.status}". Only "accepted" tasks can be completed.`,
+        message: `Cannot complete task. Task status is "${task.status}". Only "pending_verification" tasks can be completed.`,
         currentStatus: task.status,
       },
     };
@@ -190,7 +190,8 @@ exports.validateCreation = (data, user) => {
 exports.getValidTransitions = (currentStatus) => {
   const transitions = {
     open: "Can be accepted by community members",
-    accepted: "Can be marked as completed by task creator",
+    accepted: "Can be marked as completed by assigned helper",
+    pending_verification: "Can be confirmed as completed by task creator",
     completed: "Task is finished. No further transitions allowed.",
   };
 

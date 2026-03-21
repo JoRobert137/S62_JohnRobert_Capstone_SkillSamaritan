@@ -27,4 +27,8 @@ router.post("/:id/accept", authenticateToken, taskController.acceptTask);
 // POST /api/tasks/:id/complete
 router.post("/:id/complete", authenticateToken, taskController.completeTask);
 
+// CONFIRM TASK COMPLETION (protected)
+// POST /api/tasks/:id/confirm
+router.post("/:id/confirm", authenticateToken, taskController.confirmTaskCompletion);
+
 module.exports = router;

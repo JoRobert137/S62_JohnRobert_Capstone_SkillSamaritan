@@ -34,6 +34,22 @@ const TaskForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const title = form.title.trim();
+    const description = form.description.trim();
+    const points = Number(form.points);
+
+    if (!title || !description) {
+      toast.error("Title and description are required.");
+      return;
+    }
+
+    if (!Number.isFinite(points) || points < 20) {
+      setPointsError("Minimum 20 points required.");
+      toast.error("Please enter at least 20 points.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -43,17 +59,11 @@ const TaskForm = () => {
         .filter((s) => s !== "");
 
       await taskAPI.createTask({
-        title: form.title,
-        description: form.description,
-        points: Number(form.points),
+        title,
+        description,
+        points,
         skillsRequired: skillsArray,
       });
-
-      if (Number(form.points) < 20) {
-        toast.error("Please enter at least 20 points.");
-        setIsLoading(false);
-        return;
-    }
 
       toast.success("Task created successfully!");
       setTimeout(() => navigate("/tasks"), 1200);

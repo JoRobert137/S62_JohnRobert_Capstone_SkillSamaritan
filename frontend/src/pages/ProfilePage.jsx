@@ -1,19 +1,205 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Mail, Tag, Save } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, ClipboardList, Mail, PencilLine, Save, Sparkles, Tag, Trophy, User } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { userAPI } from '../services/api';
+import { taskAPI, userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return value._id || value.id || '';
+};
+
+const formatDate = (value) => {
+  if (!value) return 'N/A';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'N/A';
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const getInitials = (name) => {
+  if (!name) return 'SS';
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+};
+
+const getStatusClasses = (status) => {
+  if (status === 'completed') return 'bg-blue-50 text-blue-700 border-blue-200';
+  if (status === 'accepted') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+  return 'bg-green-50 text-green-700 border-green-200';
+};
+
+const SectionCard = ({ title, subtitle, icon: Icon, children }) => (
+  <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-md transition-shadow duration-200">
+    <div className="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      </div>
+      {Icon && (
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 text-white flex items-center justify-center shadow-sm shrink-0">
+          <Icon className="w-4.5 h-4.5" />
+        </div>
+      )}
+    </div>
+    {children}
+  </section>
+);
+
+const StatBlock = ({ label, value }) => (
+  <div className="rounded-lg border border-gray-100 bg-gradient-to-b from-white to-gray-50 p-4 text-center hover:shadow-sm transition-shadow duration-200">
+    <p className="text-xs sm:text-sm font-medium text-gray-500">{label}</p>
+    <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+  </div>
+);
+
+const AchievementBadge = ({ title, unlocked }) => (
+  <div
+    className={`rounded-lg border p-4 transition-all duration-200 ${
+      unlocked
+        ? 'border-yellow-200 bg-yellow-50 text-yellow-800 hover:shadow-sm'
+        : 'border-gray-200 bg-gray-50 text-gray-400'
+    }`}
+  >
+    <p className="text-sm font-semibold">{title}</p>
+    <p className="text-xs mt-1">{unlocked ? 'Unlocked' : 'In progress'}</p>
+  </div>
+);
+
+const TaskItem = ({ task, dateLabel, dateValue }) => (
+  <li className="border border-gray-100 rounded-lg p-4 hover:border-green-200 hover:shadow-sm transition-all duration-200">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div>
+        <h3 className="text-sm sm:text-base font-semibold text-gray-900">{task.title || 'Untitled Task'}</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Skill: {task.skillsRequired?.[0] || 'General'}
+        </p>
+      </div>
+      <span className={`inline-flex items-center self-start px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusClasses(task.status)}`}>
+        {(task.status || 'open').charAt(0).toUpperCase() + (task.status || 'open').slice(1)}
+      </span>
+    </div>
+    <p className="text-xs text-gray-500 mt-3">
+      {dateLabel}: {formatDate(dateValue)}
+    </p>
+  </li>
+);
+
 const ProfilePage = () => {
-  const navigate = useNavigate();
   const { user, login, token } = useAuth();
+  const [tasks, setTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [activityTab, setActivityTab] = useState('created');
+  const [isEditing, setIsEditing] = useState(false);
+
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [skills, setSkills] = useState(Array.isArray(user?.skills) ? user.skills.join(', ') : '');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+    setSkills(Array.isArray(user?.skills) ? user.skills.join(', ') : '');
+  }, [user]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoadingTasks(true);
+      try {
+        const response = await taskAPI.getAllTasks();
+        setTasks(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        setTasks([]);
+        toast.error(error?.response?.data?.message || 'Unable to load profile activity.');
+      } finally {
+        setLoadingTasks(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const currentUserId = normalizeId(user?._id || user?.id);
+
+  const createdTasks = useMemo(
+    () => tasks.filter((task) => normalizeId(task.createdBy) === currentUserId),
+    [tasks, currentUserId]
+  );
+
+  const completedTasks = useMemo(
+    () =>
+      tasks.filter(
+        (task) =>
+          normalizeId(task.acceptedBy) === currentUserId && task.status === 'completed'
+      ),
+    [tasks, currentUserId]
+  );
+
+  const pointsEarned = user?.points ?? 0;
+  const skillsOffered = Array.isArray(user?.skills) ? user.skills : [];
+
+  const contributionStats = useMemo(
+    () => [
+      { label: 'Tasks Created', value: user?.tasksPosted ?? createdTasks.length },
+      { label: 'Tasks Completed', value: user?.tasksCompleted ?? completedTasks.length },
+    ],
+    [user?.tasksPosted, user?.tasksCompleted, createdTasks.length, completedTasks.length]
+  );
+
+  const visibleTasks = activityTab === 'created' ? createdTasks : completedTasks;
+
+  const recentActivity = useMemo(() => {
+    const createdEvents = createdTasks.map((task) => ({
+      id: `created-${task._id}`,
+      text: `Created a task: ${task.title || 'Untitled Task'}`,
+      date: task.createdAt,
+    }));
+
+    const helpedEvents = completedTasks.map((task) => ({
+      id: `helped-${task._id}`,
+      text: `Helped another user by completing: ${task.title || 'Untitled Task'}`,
+      date: task.completedAt || task.updatedAt,
+    }));
+
+    const allEvents = [...createdEvents, ...helpedEvents]
+      .filter((event) => event.date)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6);
+
+    return allEvents;
+  }, [createdTasks, completedTasks]);
+
+  const achievements = useMemo(
+    () => [
+      {
+        title: '🏆 First Task Created',
+        unlocked: (user?.tasksPosted ?? createdTasks.length) >= 1,
+      },
+      {
+        title: '🤝 Community Helper',
+        unlocked: (user?.tasksCompleted ?? completedTasks.length) >= 1,
+      },
+      {
+        title: '⭐ 100 Points Earned',
+        unlocked: pointsEarned >= 100,
+      },
+    ],
+    [user?.tasksPosted, user?.tasksCompleted, createdTasks.length, completedTasks.length, pointsEarned]
+  );
+
+  const memberSince = user?.createdAt ? formatDate(user.createdAt) : null;
+  const bio = user?.bio || 'Passionate about helping the community through shared skills and meaningful tasks.';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -39,6 +225,7 @@ const ProfilePage = () => {
       const updatedUser = response.data?.user || response.data;
 
       login(token, updatedUser);
+      setIsEditing(false);
       toast.success('Profile updated successfully.');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update profile.');
@@ -50,72 +237,226 @@ const ProfilePage = () => {
   return (
     <>
       <Header />
-      <section className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 py-10 px-4">
-        <div className="max-w-2xl mx-auto bg-white border border-gray-100 rounded-2xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-          <p className="text-gray-600 mb-8">Manage your account details and skills.</p>
+      <section className="min-h-screen bg-gradient-to-b from-green-50 via-white to-teal-50 py-8 sm:py-10 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-7 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Profile</h1>
+            <p className="text-gray-600 mt-2">Track your impact, manage your details, and showcase your skills.</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Name</label>
-              <div className="relative mt-2">
-                <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-7">
+            <aside className="lg:col-span-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow duration-200 sticky top-24">
+                <div className="mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                  {getInitials(user?.name)}
+                </div>
+                <h2 className="mt-4 text-2xl font-semibold text-gray-900">{user?.name || 'Community Member'}</h2>
+                <p className="text-sm text-gray-500 mt-1">{user?.email || 'No email available'}</p>
+
+                <div className="mt-5 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-yellow-700 font-semibold">Points Earned</p>
+                  <p className="text-2xl font-bold text-yellow-700 mt-1">{pointsEarned}</p>
+                </div>
+
+                {memberSince && (
+                  <p className="text-sm text-gray-500 mt-4 inline-flex items-center justify-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-green-600" />
+                    Member since {memberSince}
+                  </p>
+                )}
+
+                <p className="text-sm text-gray-600 mt-4 leading-relaxed">{bio}</p>
+
+                <button
+                  type="button"
+                  onClick={() => setIsEditing((prev) => !prev)}
+                  className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <PencilLine className="w-4 h-4" />
+                  {isEditing ? 'Close Edit' : 'Edit Profile'}
+                </button>
+
+                {isEditing && (
+                  <form onSubmit={handleSubmit} className="mt-5 text-left space-y-4 border-t border-gray-100 pt-5">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Name</label>
+                      <div className="relative mt-2">
+                        <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          value={name}
+                          onChange={(event) => setName(event.target.value)}
+                          className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Email</label>
+                      <div className="relative mt-2">
+                        <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Skills (comma-separated)</label>
+                      <div className="relative mt-2">
+                        <Tag className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                        <textarea
+                          value={skills}
+                          onChange={(event) => setSkills(event.target.value)}
+                          rows={3}
+                          className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="Cooking, Gardening, JavaScript"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2.5 rounded-lg disabled:opacity-60 transition-colors duration-200"
+                    >
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </form>
+                )}
               </div>
-            </div>
+            </aside>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700">Email</label>
-              <div className="relative mt-2">
-                <Mail className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Skills (comma-separated)</label>
-              <div className="relative mt-2">
-                <Tag className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
-                <textarea
-                  value={skills}
-                  onChange={(event) => setSkills(event.target.value)}
-                  rows={4}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="React, Node.js, MongoDB"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-50"
+            <main className="lg:col-span-8 space-y-6">
+              <SectionCard
+                title="My Contributions"
+                subtitle="A quick view of your community impact"
+                icon={Trophy}
               >
-                <Save className="w-4 h-4" />
-                {isSaving ? 'Saving...' : 'Save Profile'}
-              </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {contributionStats.map((stat) => (
+                    <StatBlock key={stat.label} label={stat.label} value={stat.value} />
+                  ))}
+                </div>
+              </SectionCard>
 
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="px-5 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+              <SectionCard
+                title="Skills Offered"
+                subtitle="The strengths you bring to the community"
+                icon={Sparkles}
               >
-                Back to Dashboard
-              </button>
-            </div>
-          </form>
+                {skillsOffered.length > 0 ? (
+                  <div className="flex flex-wrap gap-2.5">
+                    {skillsOffered.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No skills added yet.</p>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                title="Contribution History"
+                subtitle="A timeline of tasks you created and completed"
+                icon={ClipboardList}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setActivityTab('created')}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      activityTab === 'created'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Tasks Created
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivityTab('completed')}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      activityTab === 'completed'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Tasks Completed
+                  </button>
+                </div>
+
+                {loadingTasks ? (
+                  <p className="text-sm text-gray-500">Loading activity...</p>
+                ) : visibleTasks.length > 0 ? (
+                  <ul className="space-y-3">
+                    {visibleTasks.map((task) => (
+                      <TaskItem
+                        key={task._id}
+                        task={task}
+                        dateLabel={activityTab === 'created' ? 'Created' : 'Completed'}
+                        dateValue={activityTab === 'created' ? task.createdAt : task.completedAt || task.updatedAt}
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    {activityTab === 'created' ? 'No tasks created yet.' : 'No tasks completed yet.'}
+                  </p>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                title="Achievements"
+                subtitle="Badges earned through your contributions"
+                icon={Trophy}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {achievements.map((achievement) => (
+                    <AchievementBadge
+                      key={achievement.title}
+                      title={achievement.title}
+                      unlocked={achievement.unlocked}
+                    />
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Recent Activity"
+                subtitle="Latest actions from your SkillSamaritan journey"
+                icon={CheckCircle2}
+              >
+                {loadingTasks ? (
+                  <p className="text-sm text-gray-500">Loading recent activity...</p>
+                ) : recentActivity.length > 0 ? (
+                  <ul className="space-y-3">
+                    {recentActivity.map((event) => (
+                      <li key={event.id} className="flex items-start gap-3 border-b border-gray-100 pb-3 last:border-b-0">
+                        <span className="mt-1 w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                        <div>
+                          <p className="text-sm text-gray-800">{event.text}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatDate(event.date)}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No recent activity yet.</p>
+                )}
+              </SectionCard>
+            </main>
+          </div>
         </div>
       </section>
       <Footer />

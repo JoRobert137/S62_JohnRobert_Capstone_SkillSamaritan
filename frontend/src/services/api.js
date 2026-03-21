@@ -112,6 +112,11 @@ export const userAPI = {
   getAllUsers: () => API.get('/users'),
 
   /**
+   * Get leaderboard users (top 10 by points)
+   */
+  getLeaderboard: () => API.get('/users/leaderboard'),
+
+  /**
    * Update user profile
    * @param {string} userId
    * @param {Object} userData

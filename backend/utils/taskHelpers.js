@@ -8,17 +8,19 @@
  * Check if a task can transition from current status to target status
  * Valid transitions:
  * - open -> accepted
- * - accepted -> completed
+ * - accepted -> pending_verification
+ * - pending_verification -> completed
  * No other transitions allowed
  *
- * @param {string} currentStatus - Current task status ("open", "accepted", "completed")
+ * @param {string} currentStatus - Current task status ("open", "accepted", "pending_verification", "completed")
  * @param {string} targetStatus - Desired target status
  * @returns {Object} { canTransition: boolean, reason?: string }
  */
 exports.canTransitionTask = (currentStatus, targetStatus) => {
   const validTransitions = {
     open: ["accepted"],
-    accepted: ["completed"],
+    accepted: ["pending_verification"],
+    pending_verification: ["completed"],
     completed: [], // Terminal state
   };
 
@@ -51,7 +53,7 @@ exports.canTransitionTask = (currentStatus, targetStatus) => {
  *
  * @param {Object} user - User document (contains _id)
  * @param {Object} task - Task document (contains createdBy, acceptedBy)
- * @param {string} action - Action to perform ("accept", "complete", "create")
+ * @param {string} action - Action to perform ("accept", "mark_complete", "confirm_completion", "create")
  * @returns {Object} { isAuthorized: boolean, reason?: string }
  */
 exports.canUserPerformAction = (user, task, action) => {
@@ -85,12 +87,22 @@ exports.canUserPerformAction = (user, task, action) => {
       }
       return { isAuthorized: true };
 
-    case "complete":
-      // Only creator can mark as complete
+    case "mark_complete":
+      // Only assigned helper can mark task as completed for verification
+      if (!task.acceptedBy || userId !== task.acceptedBy.toString()) {
+        return {
+          isAuthorized: false,
+          reason: "Only the accepted helper can mark task as completed",
+        };
+      }
+      return { isAuthorized: true };
+
+    case "confirm_completion":
+      // Only creator can confirm completion and release points
       if (userId !== creatorId) {
         return {
           isAuthorized: false,
-          reason: "Only task creator can mark task as completed",
+          reason: "Only task creator can confirm task completion",
         };
       }
       return { isAuthorized: true };
@@ -208,6 +220,7 @@ exports.getTaskStatusDescription = (status) => {
   const descriptions = {
     open: "Open - Waiting for someone to accept",
     accepted: "In Progress - Helper is working on it",
+    pending_verification: "Pending Verification - Waiting for creator confirmation",
     completed: "Completed - Task finished and points transferred",
   };
 
