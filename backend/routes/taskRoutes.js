@@ -20,6 +20,14 @@ router.get("/", taskController.getAllTasks);
 // GET /api/tasks/:id
 router.get("/:id", taskController.getTaskById);
 
+// GET TASK COMMENTS (public)
+// GET /api/tasks/:id/comments
+router.get("/:id/comments", taskController.getTaskComments);
+
+// ADD TASK COMMENT (protected)
+// POST /api/tasks/:id/comment
+router.post("/:id/comment", authenticateToken, taskController.addTaskComment);
+
 // DELETE TASK (admin only)
 // DELETE /api/tasks/:id
 router.delete("/:id", authenticateToken, authorizeRoles("admin"), taskController.deleteTask);

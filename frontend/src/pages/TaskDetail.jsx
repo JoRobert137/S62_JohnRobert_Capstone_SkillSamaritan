@@ -6,6 +6,8 @@ import {
   CircleAlert,
   Clock,
   Coins,
+  MessageCircle,
+  Send,
   Tags,
   User,
 } from "lucide-react";
@@ -43,7 +45,11 @@ const TaskDetail = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
 
   const [task, setTask] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(true);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
 
@@ -66,6 +72,23 @@ const TaskDetail = () => {
   useEffect(() => {
     fetchTask();
   }, [fetchTask]);
+
+  const fetchComments = useCallback(async () => {
+    setCommentsLoading(true);
+    try {
+      const response = await taskAPI.getTaskComments(id);
+      setComments(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      setComments([]);
+      toast.error(error.response?.data?.message || "Failed to load comments");
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const handleAccept = async () => {
     if (!isAuthenticated) {
@@ -139,6 +162,33 @@ const TaskDetail = () => {
       toast.error(error.response?.data?.message || "Failed to delete task");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleAddComment = async (event) => {
+    event.preventDefault();
+
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    const text = commentText.trim();
+    if (!text) {
+      toast.error("Please enter a comment");
+      return;
+    }
+
+    setCommentSubmitting(true);
+    try {
+      await taskAPI.addTaskComment(id, { text });
+      setCommentText("");
+      toast.success("Comment posted");
+      await fetchComments();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to post comment");
+    } finally {
+      setCommentSubmitting(false);
     }
   };
 
@@ -265,6 +315,58 @@ const TaskDetail = () => {
                     <span className="text-sm text-gray-500">No specific skills required</span>
                   )}
                 </div>
+              </section>
+
+              <section className="mb-8 rounded-xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 inline-flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
+                  Comments
+                </h3>
+
+                <form onSubmit={handleAddComment} className="mb-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={(event) => setCommentText(event.target.value)}
+                      placeholder={isAuthenticated ? "Write a comment..." : "Login to post a comment"}
+                      disabled={!isAuthenticated || commentSubmitting}
+                      className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!isAuthenticated || commentSubmitting}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-60"
+                    >
+                      <Send className="w-4 h-4" />
+                      {commentSubmitting ? "Posting..." : "Post"}
+                    </button>
+                  </div>
+                </form>
+
+                {commentsLoading ? (
+                  <p className="text-sm text-gray-500">Loading comments...</p>
+                ) : comments.length > 0 ? (
+                  <ul className="space-y-3">
+                    {comments.map((comment) => (
+                      <li key={comment._id} className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {comment.user?.name || "Community Member"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {comment.timestamp
+                              ? new Date(comment.timestamp).toLocaleString()
+                              : "Just now"}
+                          </p>
+                        </div>
+                        <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{comment.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No comments yet. Be the first to comment.</p>
+                )}
               </section>
 
               <section className="border-t border-gray-200 pt-6">

@@ -94,6 +94,78 @@ exports.getTaskById = async (req, res) => {
   }
 };
 
+// GET TASK COMMENTS
+exports.getTaskComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id).populate("comments.user", "name email");
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const comments = Array.isArray(task.comments)
+      ? [...task.comments].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        )
+      : [];
+
+    return res.status(200).json(comments);
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid task ID format.",
+        error: "INVALID_TASK_ID",
+      });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ADD TASK COMMENT
+exports.addTaskComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+
+    const commentText = typeof text === "string" ? text.trim() : "";
+    if (!commentText) {
+      return res.status(400).json({ message: "Comment text is required" });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    task.comments.push({
+      user: req.user._id,
+      text: commentText,
+      timestamp: new Date(),
+    });
+
+    await task.save();
+
+    const updatedTask = await Task.findById(id).populate("comments.user", "name email");
+    const latestComment = updatedTask.comments[updatedTask.comments.length - 1];
+
+    return res.status(201).json({
+      message: "Comment added successfully",
+      comment: latestComment,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid task ID format.",
+        error: "INVALID_TASK_ID",
+      });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 // DELETE TASK (ADMIN ONLY)
 exports.deleteTask = async (req, res) => {
   try {

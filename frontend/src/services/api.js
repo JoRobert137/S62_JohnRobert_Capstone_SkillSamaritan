@@ -83,6 +83,19 @@ export const taskAPI = {
   getTaskById: (taskId) => API.get('/tasks/' + taskId),
 
   /**
+   * Get comments for a task
+   * @param {string} taskId
+   */
+  getTaskComments: (taskId) => API.get('/tasks/' + taskId + '/comments'),
+
+  /**
+   * Add comment to a task
+   * @param {string} taskId
+   * @param {Object} payload - { text }
+   */
+  addTaskComment: (taskId, payload) => API.post('/tasks/' + taskId + '/comment', payload),
+
+  /**
    * Create new task
    * @param {Object} taskData - { title, description, points, skillsRequired }
    */
