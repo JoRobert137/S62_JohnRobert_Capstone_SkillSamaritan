@@ -39,6 +39,12 @@ const getStatusClasses = (status) => {
   return 'bg-green-50 text-green-700 border-green-200';
 };
 
+const getBadgeFromEarnedPoints = (earnedPoints = 0) => {
+  if (earnedPoints >= 500) return 'Samaritan Pro';
+  if (earnedPoints >= 100) return 'Contributor';
+  return 'Beginner';
+};
+
 const SectionCard = ({ title, subtitle, icon: Icon, children }) => (
   <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-md transition-shadow duration-200">
     <div className="flex items-start justify-between gap-4 mb-5">
@@ -146,7 +152,9 @@ const ProfilePage = () => {
     [tasks, currentUserId]
   );
 
-  const pointsEarned = user?.points ?? 0;
+  const totalPoints = user?.points ?? 0;
+  const earnedPoints = user?.earnedPoints ?? 0;
+  const currentBadge = getBadgeFromEarnedPoints(earnedPoints);
   const skillsOffered = Array.isArray(user?.skills) ? user.skills : [];
 
   const contributionStats = useMemo(
@@ -183,19 +191,19 @@ const ProfilePage = () => {
   const achievements = useMemo(
     () => [
       {
-        title: '🏆 First Task Created',
-        unlocked: (user?.tasksPosted ?? createdTasks.length) >= 1,
+        title: '🌱 Beginner (0-99 earned points)',
+        unlocked: earnedPoints >= 0,
       },
       {
-        title: '🤝 Community Helper',
-        unlocked: (user?.tasksCompleted ?? completedTasks.length) >= 1,
+        title: '🤝 Contributor (100-499 earned points)',
+        unlocked: earnedPoints >= 100,
       },
       {
-        title: '⭐ 100 Points Earned',
-        unlocked: pointsEarned >= 100,
+        title: '🏆 Samaritan Pro (500+ earned points)',
+        unlocked: earnedPoints >= 500,
       },
     ],
-    [user?.tasksPosted, user?.tasksCompleted, createdTasks.length, completedTasks.length, pointsEarned]
+    [earnedPoints]
   );
 
   const memberSince = user?.createdAt ? formatDate(user.createdAt) : null;
@@ -254,8 +262,14 @@ const ProfilePage = () => {
                 <p className="text-sm text-gray-500 mt-1">{user?.email || 'No email available'}</p>
 
                 <div className="mt-5 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-yellow-700 font-semibold">Points Earned</p>
-                  <p className="text-2xl font-bold text-yellow-700 mt-1">{pointsEarned}</p>
+                  <p className="text-xs uppercase tracking-wide text-yellow-700 font-semibold">Earned Points</p>
+                  <p className="text-2xl font-bold text-yellow-700 mt-1">{earnedPoints}</p>
+                  <p className="text-xs text-yellow-700 mt-1">Badge: {currentBadge}</p>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-green-700 font-semibold">Total Usable Points</p>
+                  <p className="text-2xl font-bold text-green-700 mt-1">{totalPoints}</p>
                 </div>
 
                 {memberSince && (

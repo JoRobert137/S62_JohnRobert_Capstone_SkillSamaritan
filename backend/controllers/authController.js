@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const path = require('path');
+const { getBadgeFromEarnedPoints } = require('../utils/badgeUtils');
 
 if(process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config({
@@ -34,6 +35,8 @@ const buildAuthResponse = (message, user) => {
       email: user.email,
       role: user.role,
       points: user.points,
+      earnedPoints: user.earnedPoints,
+      badge: getBadgeFromEarnedPoints(user.earnedPoints),
       skills: user.skills,
     },
   };

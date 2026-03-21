@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Points cannot be negative"],
     },
+    earnedPoints: {
+      type: Number,
+      default: 0,
+      min: [0, "Earned points cannot be negative"],
+    },
     tasksPosted: {
       type: Number,
       default: 0,
@@ -48,5 +53,6 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ points: -1 });
+userSchema.index({ earnedPoints: -1 });
 
 module.exports = mongoose.model("User", userSchema);

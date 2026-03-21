@@ -1,5 +1,6 @@
 const Task = require("../models/taskModel");
 const User = require("../models/userModel");
+const { getBadgeFromEarnedPoints } = require("../utils/badgeUtils");
 const {
   validateCreation,
   validateAcceptance,
@@ -378,6 +379,8 @@ exports.confirmTaskCompletion = async (req, res) => {
       const pointsToTransfer = transactionTask.points;
       transactionCreator.points -= pointsToTransfer;
       transactionHelper.points += pointsToTransfer;
+      transactionHelper.earnedPoints =
+        (transactionHelper.earnedPoints || 0) + pointsToTransfer;
       transactionHelper.tasksCompleted += 1;
 
       transactionTask.status = "completed";
@@ -405,6 +408,8 @@ exports.confirmTaskCompletion = async (req, res) => {
         updatedStats: {
           creatorPoints: transactionCreator.points,
           helperPoints: transactionHelper.points,
+          helperEarnedPoints: transactionHelper.earnedPoints,
+          helperBadge: getBadgeFromEarnedPoints(transactionHelper.earnedPoints),
           helperTasksCompleted: transactionHelper.tasksCompleted,
         },
       });
