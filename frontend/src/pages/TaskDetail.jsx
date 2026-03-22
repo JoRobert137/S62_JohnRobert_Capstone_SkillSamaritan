@@ -16,28 +16,8 @@ import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { taskAPI } from "../services/api";
 import EmptyState from "../components/EmptyState";
+import { getTaskStatusMeta } from "../utils/taskStatus";
 import toast from "react-hot-toast";
-
-const getStatusMeta = (status) => {
-  if (status === "accepted") {
-    return {
-      label: "IN PROGRESS",
-      badgeClass: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    };
-  }
-
-  if (status === "completed") {
-    return {
-      label: "COMPLETED",
-      badgeClass: "bg-blue-100 text-blue-700 border border-blue-200",
-    };
-  }
-
-  return {
-    label: "OPEN",
-    badgeClass: "bg-green-100 text-green-700 border border-green-200",
-  };
-};
 
 const TaskDetail = () => {
   const { id } = useParams();
@@ -133,10 +113,36 @@ const TaskDetail = () => {
     setActionLoading(true);
     try {
       await taskAPI.completeTask(id);
-      toast.success("Task completed successfully!");
+      toast.success("Task marked as completed. Waiting for creator confirmation.");
       await fetchTask();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to complete task");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmCompletion = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    const currentUserId = user?._id || user?.id;
+    const taskCreatorId = task?.createdBy?._id || task?.createdBy;
+
+    if (!currentUserId || !taskCreatorId || currentUserId !== taskCreatorId) {
+      toast.error("Only the task creator can confirm completion");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await taskAPI.confirmTask(id);
+      toast.success("Completion confirmed. Points transferred.");
+      await fetchTask();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to confirm completion");
     } finally {
       setActionLoading(false);
     }
@@ -232,7 +238,7 @@ const TaskDetail = () => {
   const helperId = task.acceptedBy?._id || task.acceptedBy;
   const isCreator = Boolean(currentUserId && creatorId && currentUserId === creatorId);
   const isHelper = Boolean(currentUserId && helperId && currentUserId === helperId);
-  const statusMeta = getStatusMeta(task.status);
+  const statusMeta = getTaskStatusMeta(task.status);
 
   return (
     <>
@@ -255,6 +261,11 @@ const TaskDetail = () => {
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${statusMeta.badgeClass}`}>
                     {statusMeta.label}
                   </span>
+                  {task.status === "pending_verification" && (
+                    <p className="mt-3 text-sm text-orange-700 font-medium">
+                      Waiting for creator confirmation
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-right">
@@ -395,12 +406,25 @@ const TaskDetail = () => {
                     disabled={actionLoading}
                     className="w-full sm:w-auto px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-60"
                   >
-                    {actionLoading ? "Completing..." : "Mark Task Completed"}
+                    {actionLoading ? "Updating..." : "Mark as Completed"}
+                  </button>
+                ) : task.status === "pending_verification" && isCreator ? (
+                  <button
+                    onClick={handleConfirmCompletion}
+                    disabled={actionLoading}
+                    className="w-full sm:w-auto px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors disabled:opacity-60"
+                  >
+                    {actionLoading ? "Confirming..." : "Confirm Completion"}
                   </button>
                 ) : task.status === "completed" ? (
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                     <CheckCircle className="w-4 h-4" />
                     Task Completed
+                  </div>
+                ) : task.status === "pending_verification" ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 font-semibold">
+                    <Clock className="w-4 h-4" />
+                    Awaiting Confirmation
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-200 font-semibold">

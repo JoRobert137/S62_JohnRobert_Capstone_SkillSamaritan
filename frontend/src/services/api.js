@@ -114,6 +114,12 @@ export const taskAPI = {
   completeTask: (taskId) => API.post('/tasks/' + taskId + '/complete'),
 
   /**
+   * Confirm task completion (creator only)
+   * @param {string} taskId
+   */
+  confirmTask: (taskId) => API.post('/tasks/' + taskId + '/confirm'),
+
+  /**
    * Delete a task (admin only)
    * @param {string} taskId
    */

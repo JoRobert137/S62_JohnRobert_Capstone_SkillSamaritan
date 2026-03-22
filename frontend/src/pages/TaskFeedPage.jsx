@@ -18,27 +18,7 @@ import { taskAPI } from "../services/api";
 import toast from "react-hot-toast";
 import SkeletonCard from "../components/SkeletonCard";
 import EmptyState from "../components/EmptyState";
-
-const getStatusStyles = (status) => {
-  if (status === "accepted") {
-    return {
-      label: "In Progress",
-      className: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    };
-  }
-
-  if (status === "completed") {
-    return {
-      label: "Completed",
-      className: "bg-blue-100 text-blue-700 border border-blue-200",
-    };
-  }
-
-  return {
-    label: "Open",
-    className: "bg-green-100 text-green-700 border border-green-200",
-  };
-};
+import { getTaskStatusMeta } from "../utils/taskStatus";
 
 const TaskFeedPage = () => {
   const navigate = useNavigate();
@@ -50,6 +30,8 @@ const TaskFeedPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState(null);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -88,7 +70,8 @@ const TaskFeedPage = () => {
 
         const matchesStatus =
           statusFilter === "all" ||
-          (statusFilter === "in-progress" && task.status === "accepted") ||
+          (statusFilter === "in-progress" &&
+            (task.status === "accepted" || task.status === "pending_verification")) ||
           (statusFilter !== "in-progress" && task.status === statusFilter);
 
         return matchesSearch && matchesStatus;
@@ -114,12 +97,17 @@ const TaskFeedPage = () => {
       return;
     }
 
+    setActionLoading(true);
+    setActiveTaskId(taskId);
     try {
       await taskAPI.acceptTask(taskId);
       toast.success("Task accepted successfully!");
       await fetchTasks();
     } catch (error) {
       toast.error(error.response?.data?.message || "Unable to accept task.");
+    } finally {
+      setActionLoading(false);
+      setActiveTaskId(null);
     }
   };
 
@@ -129,12 +117,37 @@ const TaskFeedPage = () => {
       return;
     }
 
+    setActionLoading(true);
+    setActiveTaskId(taskId);
     try {
       await taskAPI.completeTask(taskId);
-      toast.success("Task completed. Great job!");
+      toast.success("Task marked as completed. Waiting for creator confirmation.");
       await fetchTasks();
     } catch (error) {
       toast.error(error.response?.data?.message || "Unable to complete task.");
+    } finally {
+      setActionLoading(false);
+      setActiveTaskId(null);
+    }
+  };
+
+  const handleConfirmTask = async (taskId) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionLoading(true);
+    setActiveTaskId(taskId);
+    try {
+      await taskAPI.confirmTask(taskId);
+      toast.success("Completion confirmed. Points transferred.");
+      await fetchTasks();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to confirm completion.");
+    } finally {
+      setActionLoading(false);
+      setActiveTaskId(null);
     }
   };
 
@@ -210,6 +223,7 @@ const TaskFeedPage = () => {
                     <option value="all">All</option>
                     <option value="open">Open</option>
                     <option value="in-progress">In Progress</option>
+                    <option value="pending_verification">Awaiting Confirmation</option>
                     <option value="completed">Completed</option>
                   </select>
                 </div>
@@ -272,8 +286,9 @@ const TaskFeedPage = () => {
           {!loading && filteredTasks.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredTasks.map((task) => {
-                const status = getStatusStyles(task.status);
+                const status = getTaskStatusMeta(task.status);
                 const skills = Array.isArray(task.skillsRequired) ? task.skillsRequired : [];
+                const isBusy = actionLoading && activeTaskId === task._id;
 
                 return (
                   <article
@@ -335,9 +350,10 @@ const TaskFeedPage = () => {
                       {task.status === "open" && !isTaskCreator(task) && (
                         <button
                           onClick={() => handleAcceptTask(task._id)}
+                          disabled={isBusy}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 font-medium transition-colors"
                         >
-                          Accept Task
+                          {isBusy ? "Updating..." : "Accept Task"}
                         </button>
                       )}
 
@@ -350,16 +366,34 @@ const TaskFeedPage = () => {
                       {task.status === "accepted" && isTaskHelper(task) && (
                         <button
                           onClick={() => handleCompleteTask(task._id)}
+                          disabled={isBusy}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-yellow-300 text-yellow-700 hover:bg-yellow-50 font-medium transition-colors"
                         >
                           <CheckCircle className="h-4 w-4" />
-                          Mark Complete
+                          {isBusy ? "Updating..." : "Mark as Completed"}
+                        </button>
+                      )}
+
+                      {task.status === "pending_verification" && isTaskCreator(task) && (
+                        <button
+                          onClick={() => handleConfirmTask(task._id)}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 hover:bg-indigo-50 font-medium transition-colors"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          {isBusy ? "Confirming..." : "Confirm Completion"}
                         </button>
                       )}
 
                       {task.status === "accepted" && !isTaskHelper(task) && (
                         <span className="inline-flex items-center px-4 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700 font-medium">
                           In Progress
+                        </span>
+                      )}
+
+                      {task.status === "pending_verification" && !isTaskCreator(task) && (
+                        <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 font-medium">
+                          Waiting for creator confirmation
                         </span>
                       )}
                     </div>
