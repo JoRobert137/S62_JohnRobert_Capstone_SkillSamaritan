@@ -10,27 +10,12 @@ import {
   CircleDollarSign,
   Clock3,
   Crown,
-  LayoutDashboard,
-  ListChecks,
   Medal,
   Plus,
   Search,
-  Settings,
-  Trophy,
-  User,
   Users,
   Inbox,
 } from 'lucide-react';
-
-const sidebarItems = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { key: 'feed', label: 'Task Feed', icon: ListChecks, path: '/tasks' },
-  { key: 'myTasks', label: 'My Tasks', icon: Clock3, path: '/tasks' },
-  { key: 'create', label: 'Create Task', icon: Plus, path: '/create-task' },
-  { key: 'leaderboard', label: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
-  { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
-  { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-];
 
 const getStatusClasses = (status) => {
   if (status === 'completed') {
@@ -270,41 +255,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 text-gray-900">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-72 border-r border-green-100 bg-white px-4 py-6 lg:flex lg:flex-col">
-          <div className="mb-10 px-2">
-            <h1 className="text-xl font-semibold tracking-tight text-gray-900">SkillSamaritan</h1>
-            <p className="mt-1 text-xs text-gray-500">Community task exchange</p>
-          </div>
-
-          <nav className="space-y-1">
-            {sidebarItems.map(({ key, label, icon: Icon, path }) => {
-              const isActive = key === 'dashboard';
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => navigate(path)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-300 ${
-                    isActive
-                      ? 'bg-green-100 text-green-700'
-                      : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-                  }`}
-                >
-                  {React.createElement(Icon, { className: 'h-4 w-4' })}
-                  <span>{label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="mt-auto rounded-2xl border border-green-100 bg-white p-4 shadow-lg">
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Your balance</p>
-            <p className="mt-2 text-2xl font-semibold text-green-700">{stats.totalPoints} pts</p>
-          </div>
-        </aside>
-
-        <main className="flex-1">
+      <main>
           <header className="sticky top-0 z-20 border-b border-green-100 bg-white px-4 py-4 shadow-sm md:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 lg:hidden">
@@ -368,24 +319,6 @@ const Dashboard = () => {
                   ) : null}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-              {sidebarItems.map(({ key, label, icon: Icon, path }) => (
-                <button
-                  key={`mobile-${key}`}
-                  type="button"
-                  onClick={() => navigate(path)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${
-                    key === 'dashboard'
-                      ? 'border-green-200 bg-green-100 text-green-700'
-                      : 'border-green-100 bg-white text-gray-700'
-                  }`}
-                >
-                  {React.createElement(Icon, { className: 'h-3.5 w-3.5' })}
-                  <span>{label}</span>
-                </button>
-              ))}
             </div>
           </header>
 
@@ -540,8 +473,7 @@ const Dashboard = () => {
               </div>
             </div>
           </section>
-        </main>
-      </div>
+      </main>
     </div>
   );
 };

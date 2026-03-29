@@ -5,6 +5,7 @@ import SignupForm from './components/SignupForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/AppLayout';
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 import Dashboard from './pages/Dashboard';
 import TaskForm from './pages/TaskForm';
 import TaskFeedPage from './pages/TaskFeedPage';
@@ -33,6 +34,7 @@ function App() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/signup" element={<SignupForm />} />
         <Route path="/contact" element={<ContactPage />} />

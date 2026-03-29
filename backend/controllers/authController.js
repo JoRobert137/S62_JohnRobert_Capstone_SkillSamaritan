@@ -24,7 +24,7 @@ const normalizeSkills = (skills) => {
 };
 
 const buildAuthResponse = (message, user) => {
-  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1d" });
 
   return {
     message,

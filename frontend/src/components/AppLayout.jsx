@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 
+const PUBLIC_PATHS = ['/', '/about', '/login', '/signup', '/contact'];
+
 const AppLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isPublicRoute = PUBLIC_PATHS.includes(location.pathname);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
-  // For public pages (guest), just Header + content + Footer
-  if (!isAuthenticated) {
+  // Public pages should not render the app sidebar.
+  if (!isAuthenticated || isPublicRoute) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />

@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Users, Star } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-gradient-to-br from-green-600 via-green-500 to-teal-500 text-white py-24 sm:py-32 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-green-600 via-green-500 to-teal-500 text-white pt-8 pb-24 sm:pt-10 sm:pb-32 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />

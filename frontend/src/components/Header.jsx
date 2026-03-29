@@ -1,16 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, User, Sparkles, LogOut, ClipboardList, BookOpen, ChevronDown, Settings } from 'lucide-react';
+import { Bell, User, Sparkles, LogOut, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const GUEST_NAV_LINKS = [
   { label: 'Home', to: '/', end: true },
-  { label: 'About', to: '/', end: true },
+  { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
 
 const AUTH_NAV_LINKS = [
-  { label: 'Dashboard', to: '/dashboard' },
   { label: 'Browse Tasks', to: '/tasks' },
   { label: 'Leaderboard', to: '/leaderboard' },
   { label: 'Contact', to: '/contact' },
@@ -142,13 +141,6 @@ const Header = () => {
                     </div>
 
                     <div className="py-1">
-                      <button
-                        onClick={() => handleDropdownNav('/dashboard')}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"
-                      >
-                        <ClipboardList className="w-4 h-4 shrink-0" />
-                        Dashboard
-                      </button>
                       <button
                         onClick={() => handleDropdownNav('/profile')}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"

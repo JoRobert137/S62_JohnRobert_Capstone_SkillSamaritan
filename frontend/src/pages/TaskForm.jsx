@@ -76,8 +76,8 @@ const TaskForm = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-teal-50 px-4 py-8">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-green-100">
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-teal-50 px-4 py-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden border border-green-100">
         <div className="bg-gradient-to-r from-green-500 to-teal-500 p-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
             <h2 className="text-3xl font-bold text-white">Create a New Task</h2>
@@ -85,8 +85,8 @@ const TaskForm = () => {
           <p className="text-green-100">Share what you need help with and reward helpful neighbors</p>
         </div>
 
-        <div className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-6 md:p-7">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Pencil className="h-4 w-4 text-green-500" />
@@ -113,11 +113,11 @@ const TaskForm = () => {
                 onChange={handleChange}
                 required
                 placeholder="Describe the task in detail... What exactly do you need help with? What should the helper know?"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 h-32 resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 h-28 resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Coins className="h-4 w-4 text-yellow-500" />
