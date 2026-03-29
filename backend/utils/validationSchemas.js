@@ -72,4 +72,14 @@ exports.updateUserValidation = [
       if (isStringArray(value)) return true;
       throw new Error("skills must be an array of strings");
     }),
+  body("bio")
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage("Bio cannot exceed 500 characters"),
+  body("location")
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage("Location cannot exceed 100 characters"),
 ];

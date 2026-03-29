@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, Sparkles, Tags } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Tags } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 
@@ -23,31 +23,29 @@ const SignupForm = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    const res = await authAPI.signup(form);
+    try {
+      const res = await authAPI.signup(form);
 
-    // Use AuthContext login method
-    login(res.data.token, res.data.user);
+      // Use AuthContext login method
+      login(res.data.token, res.data.user);
 
-    setMessage({ type: "success", text: "Account created! Redirecting..." });
+      setMessage({ type: "success", text: "Account created! Redirecting..." });
 
-    // Redirect to dashboard after signup
-    setTimeout(() => navigate('/dashboard', { replace: true }), 1200);
+      // Redirect to dashboard after signup
+      setTimeout(() => navigate('/dashboard', { replace: true }), 1200);
 
-    setForm({ name: "", email: "", password: "" });
+      setForm({ name: "", email: "", password: "", skills: "" });
 
-  } catch (err) {
-    const errMsg = err.response?.data?.message || "Signup Failed. Please Try Again.";
-    setMessage({ type: "error", text: errMsg });
-    console.error(err);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+    } catch (err) {
+      const errMsg = err.response?.data?.message || "Signup Failed. Please Try Again.";
+      setMessage({ type: "error", text: errMsg });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-teal-50 px-4 py-8">
@@ -68,7 +66,7 @@ const SignupForm = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Full Name</label>
               <div className="relative">
@@ -109,8 +107,9 @@ const SignupForm = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={handleChange}
-                  placeholder="Create a password"
+                  placeholder="Create a password (min 6 chars)"
                   required
+                  minLength={6}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
                 />
                 <button
@@ -121,6 +120,22 @@ const SignupForm = () => {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Tags className="h-4 w-4 text-green-500" />
+                Skills
+                <span className="text-xs text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                name="skills"
+                value={form.skills}
+                onChange={handleChange}
+                placeholder="e.g., Cooking, JavaScript, Gardening"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+              />
+              <p className="text-xs text-gray-500">Separate multiple skills with commas</p>
             </div>
 
             <button

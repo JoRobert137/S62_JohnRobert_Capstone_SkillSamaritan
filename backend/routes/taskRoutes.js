@@ -28,9 +28,9 @@ router.get("/:id/comments", taskController.getTaskComments);
 // POST /api/tasks/:id/comment
 router.post("/:id/comment", authenticateToken, taskController.addTaskComment);
 
-// DELETE TASK (admin only)
+// DELETE TASK (admin or task creator for open tasks)
 // DELETE /api/tasks/:id
-router.delete("/:id", authenticateToken, authorizeRoles("admin"), taskController.deleteTask);
+router.delete("/:id", authenticateToken, taskController.deleteTask);
 
 // ACCEPT TASK (protected)
 // POST /api/tasks/:id/accept

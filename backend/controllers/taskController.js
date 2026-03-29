@@ -65,13 +65,48 @@ exports.createTask = async (req, res) => {
   }
 };
 
-// GET ALL TASKS (PUBLIC FEED)
+// GET ALL TASKS (PUBLIC FEED) — supports search, status, sort, minPoints, maxPoints
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find()
+    const { search, status, sort, minPoints, maxPoints } = req.query;
+    const filter = {};
+
+    // Status filter
+    if (status && status !== "all") {
+      if (status === "in-progress") {
+        filter.status = { $in: ["accepted", "pending_verification"] };
+      } else {
+        filter.status = status;
+      }
+    }
+
+    // Points range filter
+    if (minPoints || maxPoints) {
+      filter.points = {};
+      if (minPoints) filter.points.$gte = Number(minPoints);
+      if (maxPoints) filter.points.$lte = Number(maxPoints);
+    }
+
+    // Search filter (title or description)
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), "i");
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { skillsRequired: { $in: [searchRegex] } },
+      ];
+    }
+
+    // Sort option
+    let sortOption = { createdAt: -1 };
+    if (sort === "highest") sortOption = { points: -1 };
+    else if (sort === "lowest") sortOption = { points: 1 };
+    else if (sort === "oldest") sortOption = { createdAt: 1 };
+
+    const tasks = await Task.find(filter)
       .populate("createdBy", "name email skills")
       .populate("acceptedBy", "name email")
-      .sort({ createdAt: -1 });
+      .sort(sortOption);
 
     return res.status(200).json(tasks);
   } catch (error) {
@@ -166,19 +201,38 @@ exports.addTaskComment = async (req, res) => {
   }
 };
 
-// DELETE TASK (ADMIN ONLY)
+// DELETE TASK (Admin OR task creator for open tasks)
 exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedTask = await Task.findByIdAndDelete(id);
+    const userId = req.user._id;
+    const isAdmin = req.user.role === "admin";
 
-    if (!deletedTask) {
+    const task = await Task.findById(id);
+
+    if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    const isCreator = task.createdBy.equals(userId);
+
+    // Admin can delete any task. Creator can only delete their own open tasks.
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({ message: "You are not authorized to delete this task." });
+    }
+
+    if (isCreator && !isAdmin && task.status !== "open") {
+      return res.status(400).json({
+        message: "You can only delete your own tasks that are still open.",
+        currentStatus: task.status,
+      });
+    }
+
+    await Task.findByIdAndDelete(id);
+
     return res.status(200).json({
       message: "Task deleted successfully",
-      taskId: deletedTask._id,
+      taskId: task._id,
     });
   } catch (error) {
     if (error.name === "CastError") {

@@ -11,6 +11,9 @@ router.get("/", authenticateToken, userController.getAllUsers);
 // GET LEADERBOARD (TOP USERS BY POINTS)
 router.get("/leaderboard", authenticateToken, userController.getLeaderboard);
 
+// GET SINGLE USER BY ID
+router.get("/:id", authenticateToken, userController.getUserById);
+
 // UPDATE EXISTING USER
 router.put("/:id", authenticateToken, updateUserValidation, validateRequest, userController.updateUser);
 

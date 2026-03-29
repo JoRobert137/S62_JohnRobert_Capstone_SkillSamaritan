@@ -149,8 +149,8 @@ const TaskDetail = () => {
   };
 
   const handleDeleteTask = async () => {
-    if (!isAuthenticated || !isAdmin) {
-      toast.error("Only admin can delete tasks");
+    if (!isAuthenticated) {
+      toast.error("Please log in to perform this action");
       return;
     }
 
@@ -440,6 +440,16 @@ const TaskDetail = () => {
                     className="mt-3 w-full sm:ml-3 sm:mt-0 sm:w-auto px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors disabled:opacity-60"
                   >
                     {actionLoading ? "Deleting..." : "Delete Task (Admin)"}
+                  </button>
+                )}
+
+                {isAuthenticated && !isAdmin && isCreator && task.status === "open" && (
+                  <button
+                    onClick={handleDeleteTask}
+                    disabled={actionLoading}
+                    className="mt-3 w-full sm:ml-3 sm:mt-0 sm:w-auto px-6 py-3 rounded-lg border-2 border-red-300 text-red-600 hover:bg-red-50 font-semibold transition-colors disabled:opacity-60"
+                  >
+                    {actionLoading ? "Deleting..." : "Delete Task"}
                   </button>
                 )}
               </section>

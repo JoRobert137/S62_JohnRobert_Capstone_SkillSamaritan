@@ -427,7 +427,6 @@ const Dashboard = () => {
                       description="Create your first task and start helping the community."
                       actionLabel="Create Task"
                       onAction={() => navigate('/create-task')}
-                      className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600 [&>button]:bg-gradient-to-r [&>button]:from-green-500 [&>button]:to-teal-600 [&>button]:text-white [&>button]:border-0 [&>button]:hover:from-green-600 [&>button]:hover:to-teal-700"
                     />
                   )}
                 </div>
@@ -455,7 +454,6 @@ const Dashboard = () => {
                       description="Browse available tasks and accept one to start earning points."
                       actionLabel="Browse Tasks"
                       onAction={() => navigate('/tasks')}
-                      className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600 [&>button]:bg-gradient-to-r [&>button]:from-green-500 [&>button]:to-teal-600 [&>button]:text-white [&>button]:border-0 [&>button]:hover:from-green-600 [&>button]:hover:to-teal-700"
                     />
                   )}
                 </div>
@@ -513,7 +511,6 @@ const Dashboard = () => {
                         icon={<Users className="h-5 w-5 text-teal-600" />}
                         title="No activity yet"
                         description="Community activity will appear here once members start completing tasks."
-                        className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600"
                       />
                     </li>
                   )}
@@ -536,7 +533,6 @@ const Dashboard = () => {
                         icon={<Medal className="h-5 w-5 text-yellow-500" />}
                         title="No leaderboard data"
                         description="Leaderboard rankings will appear after users start earning points."
-                        className="bg-white border border-green-100 shadow-lg [&>div]:bg-green-50 [&>div]:text-green-600 [&>h3]:text-gray-900 [&>p]:text-gray-600"
                       />
                     </li>
                   )}

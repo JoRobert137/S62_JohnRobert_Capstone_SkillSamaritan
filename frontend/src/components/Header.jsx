@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, User, Sparkles, LogOut, ClipboardList, BookOpen, ChevronDown } from 'lucide-react';
+import { Bell, User, Sparkles, LogOut, ClipboardList, BookOpen, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const NAV_LINKS = [
-  { label: 'Browse Skills', to: '/tasks' },
-  { label: 'Community', to: '/dashboard' },
+const GUEST_NAV_LINKS = [
+  { label: 'Home', to: '/', end: true },
   { label: 'About', to: '/', end: true },
+  { label: 'Contact', to: '/contact' },
+];
+
+const AUTH_NAV_LINKS = [
+  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Browse Tasks', to: '/tasks' },
+  { label: 'Leaderboard', to: '/leaderboard' },
   { label: 'Contact', to: '/contact' },
 ];
 
@@ -15,6 +21,8 @@ const Header = () => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const navLinks = isAuthenticated ? AUTH_NAV_LINKS : GUEST_NAV_LINKS;
 
   const handleLogout = () => {
     setDropdownOpen(false);
@@ -38,15 +46,15 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4 lg:gap-8">
+        <div className="flex items-center justify-between h-16 gap-4">
 
-          {/* Left section */}
-          <div className="flex items-center justify-self-start min-w-0">
-            <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          {/* Left: Logo — add left margin on mobile when sidebar toggle is visible */}
+          <div className={`flex items-center min-w-0 ${isAuthenticated ? 'pl-12 lg:pl-0' : ''}`}>
+            <Link to={isAuthenticated ? '/dashboard' : '/'} className="flex items-center gap-2.5 shrink-0 group">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
-                <Sparkles className="w-4.5 h-4.5 text-white" />
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-teal-700 bg-clip-text text-transparent hidden sm:block">
                 SkillSamaritan
@@ -54,15 +62,15 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Center section */}
-          <nav className="hidden lg:flex items-center justify-center gap-8 xl:gap-10 justify-self-center">
-            {NAV_LINKS.map(({ label, to, end }) => (
+          {/* Center: Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {navLinks.map(({ label, to, end }) => (
               <NavLink
                 key={label}
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `pb-1 border-b-2 text-base font-medium transition-colors duration-150 ${
+                  `pb-1 border-b-2 text-sm font-medium transition-colors duration-150 ${
                     isActive
                       ? 'text-green-600 border-green-500'
                       : 'text-gray-600 border-transparent hover:text-green-600 hover:border-green-200'
@@ -74,8 +82,8 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Right section */}
-          <div className="flex items-center justify-self-end gap-1.5 shrink-0">
+          {/* Right: Auth actions */}
+          <div className="flex items-center gap-2 shrink-0">
             {isAuthenticated ? (
               <>
                 {/* Notification bell */}
@@ -87,7 +95,12 @@ const Header = () => {
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                 </button>
 
-                {/* Profile avatar + dropdown */}
+                {/* Points badge — desktop */}
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
+                  <span className="text-xs font-semibold">⭐ {user?.points ?? 0} pts</span>
+                </div>
+
+                {/* Profile dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
@@ -96,8 +109,11 @@ const Header = () => {
                     aria-haspopup="true"
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center ring-2 ring-green-200 group-hover:ring-green-400 transition-all duration-150">
-                      <User className="w-4 h-4 text-white" />
+                      <span className="text-xs font-bold text-white">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                     </div>
+                    <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                      {user?.name || 'User'}
+                    </span>
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
                         dropdownOpen ? 'rotate-180' : ''
@@ -105,7 +121,7 @@ const Header = () => {
                     />
                   </button>
 
-                  {/* Dropdown */}
+                  {/* Dropdown menu */}
                   <div
                     className={`absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 origin-top-right transition-all duration-150 ${
                       dropdownOpen
@@ -113,18 +129,26 @@ const Header = () => {
                         : 'opacity-0 scale-95 pointer-events-none'
                     }`}
                   >
-                    {/* User info */}
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {user?.name || 'User'}
                       </p>
-                      <p className="text-xs text-yellow-600 font-medium mt-0.5">
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {user?.email || ''}
+                      </p>
+                      <p className="text-xs text-yellow-600 font-medium mt-1">
                         ⭐ {user?.points ?? 0} Points
                       </p>
                     </div>
 
-                    {/* Navigation items */}
                     <div className="py-1">
+                      <button
+                        onClick={() => handleDropdownNav('/dashboard')}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"
+                      >
+                        <ClipboardList className="w-4 h-4 shrink-0" />
+                        Dashboard
+                      </button>
                       <button
                         onClick={() => handleDropdownNav('/profile')}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"
@@ -133,22 +157,14 @@ const Header = () => {
                         Profile
                       </button>
                       <button
-                        onClick={() => handleDropdownNav('/dashboard')}
+                        onClick={() => handleDropdownNav('/settings')}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"
                       >
-                        <ClipboardList className="w-4 h-4 shrink-0" />
-                        My Tasks
-                      </button>
-                      <button
-                        onClick={() => handleDropdownNav('/profile')}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150"
-                      >
-                        <BookOpen className="w-4 h-4 shrink-0" />
-                        My Skills
+                        <Settings className="w-4 h-4 shrink-0" />
+                        Settings
                       </button>
                     </div>
 
-                    {/* Logout */}
                     <div className="border-t border-gray-100 pt-1">
                       <button
                         onClick={handleLogout}

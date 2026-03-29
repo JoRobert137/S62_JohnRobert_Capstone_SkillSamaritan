@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Bell, Lock, Save, Settings as SettingsIcon, UserRound } from 'lucide-react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { Bell, Lock, MapPin, Save, Settings as SettingsIcon, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const SettingsPage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [form, setForm] = useState({
     displayName: user?.name || '',
     email: user?.email || '',
+    bio: user?.bio || '',
+    location: user?.location || '',
     emailNotifications: true,
     profileVisibility: 'public',
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -23,14 +25,38 @@ const SettingsPage = () => {
     }));
   };
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
-    toast.success('Settings UI placeholder ready. Connect this form to backend settings API next.');
+
+    const userId = user?._id || user?.id;
+    if (!userId) {
+      toast.error('Unable to find user profile.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        name: form.displayName,
+        email: form.email,
+        bio: form.bio,
+        location: form.location,
+      };
+
+      const response = await userAPI.updateUser(userId, payload);
+      const updatedUser = response.data;
+
+      updateUser(updatedUser);
+      toast.success('Settings saved successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to save settings.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <>
-      <Header />
       <section className="min-h-screen bg-gradient-to-b from-green-50 via-white to-teal-50 py-8 sm:py-10 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-7 sm:mb-8">
@@ -43,9 +69,9 @@ const SettingsPage = () => {
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-4">
-                <UserRound className="w-4.5 h-4.5 text-green-600" />
+                <UserRound className="w-5 h-5 text-green-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
               </div>
 
@@ -56,7 +82,7 @@ const SettingsPage = () => {
                     name="displayName"
                     value={form.displayName}
                     onChange={handleChange}
-                    className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
                     placeholder="Your display name"
                   />
                 </div>
@@ -68,20 +94,48 @@ const SettingsPage = () => {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
+
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-teal-600" />
+                  Location
+                </label>
+                <input
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                  className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                  placeholder="e.g., New York, NY"
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700">Bio</label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 resize-none"
+                  placeholder="Tell the community about yourself..."
+                />
+                <p className="text-xs text-gray-500 mt-1 text-right">{form.bio.length}/500</p>
+              </div>
             </section>
 
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-4">
-                <Bell className="w-4.5 h-4.5 text-teal-600" />
+                <Bell className="w-5 h-5 text-teal-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
               </div>
 
-              <label className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 px-4 py-3">
+              <label className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 px-4 py-3 hover:bg-green-50/50 transition-colors duration-200 cursor-pointer">
                 <div>
                   <p className="text-sm font-medium text-gray-900">Email notifications</p>
                   <p className="text-xs text-gray-500">Get updates for tasks and community activity.</p>
@@ -91,14 +145,14 @@ const SettingsPage = () => {
                   name="emailNotifications"
                   checked={form.emailNotifications}
                   onChange={handleChange}
-                  className="w-4 h-4"
+                  className="w-4 h-4 text-green-600 focus:ring-green-500 rounded"
                 />
               </label>
             </section>
 
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-4.5 h-4.5 text-yellow-600" />
+                <Lock className="w-5 h-5 text-yellow-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Privacy</h2>
               </div>
 
@@ -107,7 +161,7 @@ const SettingsPage = () => {
                 name="profileVisibility"
                 value={form.profileVisibility}
                 onChange={handleChange}
-                className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition-all duration-200"
               >
                 <option value="public">Public</option>
                 <option value="friends">Friends only</option>
@@ -117,15 +171,15 @@ const SettingsPage = () => {
 
             <button
               type="submit"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold px-5 py-3 rounded-lg shadow-sm hover:shadow-md transition-all"
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60"
             >
               <Save className="w-4 h-4" />
-              Save Settings
+              {isSaving ? 'Saving...' : 'Save Settings'}
             </button>
           </form>
         </div>
       </section>
-      <Footer />
     </>
   );
 };

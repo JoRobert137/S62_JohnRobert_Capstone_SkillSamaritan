@@ -39,6 +39,23 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
+  // Update user data in context and localStorage without changing token
+  const updateUser = useCallback((updatedUserData) => {
+    // Merge with existing user to preserve fields like `id` from auth response
+    setUser((prev) => {
+      const merged = { ...prev, ...updatedUserData };
+      // Normalize id: keep both id and _id in sync
+      if (updatedUserData._id && !updatedUserData.id) {
+        merged.id = updatedUserData._id;
+      }
+      if (updatedUserData.id && !updatedUserData._id) {
+        merged._id = updatedUserData.id;
+      }
+      localStorage.setItem('user', JSON.stringify(merged));
+      return merged;
+    });
+  }, []);
+
   const logout = useCallback(() => {
     clearAuthState();
   }, [clearAuthState]);
@@ -68,6 +85,7 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     login,
+    updateUser,
     logout,
     isAuthenticated,
     hasRole,

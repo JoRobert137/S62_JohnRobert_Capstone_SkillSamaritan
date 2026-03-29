@@ -297,7 +297,7 @@ const TaskFeedPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <h3 className="text-xl font-bold text-gray-900">{task.title}</h3>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${status.className}`}>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${status.badgeClass}`}>
                         {status.label}
                       </span>
                     </div>

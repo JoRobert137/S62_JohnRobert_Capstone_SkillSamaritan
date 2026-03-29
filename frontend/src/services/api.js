@@ -137,6 +137,12 @@ export const userAPI = {
   getAllUsers: () => API.get('/users'),
 
   /**
+   * Get single user by ID
+   * @param {string} userId
+   */
+  getUserById: (userId) => API.get('/users/' + userId),
+
+  /**
    * Get leaderboard users (top 10 by points)
    */
   getLeaderboard: () => API.get('/users/leaderboard'),

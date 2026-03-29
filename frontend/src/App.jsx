@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppLayout from './components/AppLayout';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import TaskForm from './pages/TaskForm';
@@ -29,8 +30,7 @@ function App() {
   }, [navigate]);
 
   return (
-    <div>
-      
+    <AppLayout>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginForm />} />
@@ -95,7 +95,7 @@ function App() {
           }
         />
       </Routes>
-    </div>
+    </AppLayout>
   );
 }
 
